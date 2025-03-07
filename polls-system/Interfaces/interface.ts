@@ -22,10 +22,13 @@ export interface Poll {
   id: string;
   title: string;
   description?: string;
+  question: string;
   created_at: string;
   expires_at?: string | null;
   is_active?: boolean; // This determines if the poll is ongoing
   options: { id: string; text: string; created_at: string }[];
+  createdAt: string;
+  updatedAt: string;
 }
 
 
@@ -38,14 +41,6 @@ export interface PollOption {
   id: number;
   text: string;
   votes: number;
-}
-
-export interface Poll {
-  id: number;
-  question: string;
-  options: PollOption[];
-  createdAt: string;
-  updatedAt: string;
 }
 
 export interface PollState {

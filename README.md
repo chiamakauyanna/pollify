@@ -1,59 +1,84 @@
-# Online Poll System
+# Pollify - Online Polling System
 
-An interactive online polling platform frontend where users can create polls, vote, and view live results with real-time updates and dynamic visualizations.
+## Introduction
 
-## 🚀 Features
-- **Poll Creation:** Create custom polls with multiple options.
-- **Real-Time Voting:** Submit votes and see instant updates.
-- **Dynamic Visualizations:** View poll results in engaging chart formats.
-- **Responsive UI:** Accessible on web and mobile devices.
-- **Form Validation:** User-friendly error messages for input validation.
+Pollify is an online polling system that allows users to create, manage, and participate in polls. The project is structured with a backend and frontend for seamless interaction.
 
-## 🛠️ Technologies Used
-- **React** with **Redux** for state management
-- **TypeScript** for type safety
-- **Charting Library** (e.g., **Recharts**) for dynamic visualizations
-- **WebSockets** for real-time updates
+## Repository Structure
 
-### Deployment
-- **Vercel** or **Netlify** for frontend hosting
-
-## 📂 Project Structure
 ```
-poll-system/
-├── public/
-├── components/
-├── features/
-├── redux/
-├── services/
-├──  App.tsx
-├──  index.tsx
-│  
-├── package.json
-└── tsconfig.json
+online-polling-system/
+  ├── polls-system/  # Main application folder
+  ├── frontend/      # React frontend
 ```
 
-## 🚦 Getting Started
+## Features
+
+- User authentication
+- Create, edit, and delete polls
+- Vote in polls
+- View poll results
+- Fetch active and past polls
+
+## Tech Stack
+
+- **Frontend:** React, Redux, TypeScript, TailwindCSS
+- **State Management:** Redux Toolkit
+
+## Setup Instructions
+
 ### Prerequisites
-- **Node.js** (>= 14.x)
-- **npm** or **yarn**
 
-### Frontend Setup
-```bash
-npm install
-npm run dev
-```
+- Node.js (v16+)
+- PostgreSQL
+- Git
 
-### Environment Variables
-Create a `.env` file in the **frontend** directory with necessary configurations.
+### Installation
 
-## 💡 Contribution Guidelines
-1. **Fork** the repository.
-2. Create a **feature branch** (`feat/new-feature`).
-3. **Commit** changes (`git commit -m 'Add new feature'`).
-4. **Push** to the branch (`git push origin feature-branch`).
-5. **Open a Pull Request**.
+1. Clone the repository:
+   ```sh
+   git clone https://github.com/yourusername/online-polling-system.git
+   ```
+2. Navigate to the project folder:
+   ```sh
+   cd online-polling-system/polls-system
+   ```
+3. Install dependencies:
+   ```sh
+   npm install
+   ```
+4. Set up the environment variables by copying `.env.example` to `.env` and updating values as needed.
+5. Start the development server:
+   ```sh
+   npm run dev
+   ```
 
-## 📝 License
-This project is licensed under the **MIT License**.
+## API Endpoints
+
+| Method | Endpoint                   | Description         |
+| ------ | -------------------------- | ------------------- |
+| GET    | /api/active-polls          | Fetch active polls  |
+| GET    | /api/polls                 | Fetch all polls     |
+| GET    | /api/polls/:id             | Fetch poll by ID    |
+| POST   | /api/polls                 | Create a new poll   |
+| PUT    | /api/polls/:id             | Update a poll       |
+| DELETE | /api/polls/:id             | Delete a poll       |
+| POST   | /api/votes                 | Vote in a poll      |
+| GET    | /api/polls/:id/results     | Get poll results    |
+
+## Contributing
+
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature-name`)
+3. Commit your changes (`git commit -m "Add feature"`)
+4. Push to the branch (`git push origin feature-name`)
+5. Open a pull request
+
+## Contact
+
+For any inquiries, reach out via email: [chiamakauyanna@gmail.com](mailto:chiamakauyanna@gmail.com)
+
+## License
+
+This project is licensed under the MIT License.
 
