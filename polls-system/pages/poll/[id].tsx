@@ -11,13 +11,16 @@ const PollDetails = () => {
   const pollData = useSelector(selectPolls);
   const [selectedOption, setSelectedOption] = useState<string | null>(null);
 
+  // Fetch polls when the component mounts or when ID changes
   useEffect(() => {
-    dispatch(fetchPolls());
-  }, [dispatch]);
+    if (id) {
+      dispatch(fetchPolls());
+    }
+  }, [dispatch, id]);
 
   if (!pollData) return <p className="text-center">Loading poll...</p>;
 
-  // Ensure pollData has results and find the poll
+  // Find the poll by ID
   const poll = pollData?.results?.find((p) => String(p.id) === String(id));
 
   if (!poll) return <p className="text-center text-red-500">Poll not found.</p>;
@@ -28,7 +31,7 @@ const PollDetails = () => {
 
   const submitVote = () => {
     if (selectedOption) {
-      dispatch(voteInPoll( option: selectedOption ));
+      dispatch(voteInPoll(selectedOption));
     }
   };
 
@@ -37,24 +40,29 @@ const PollDetails = () => {
       <h1 className="text-2xl font-bold mb-2">{poll.title}</h1>
       <p className="mb-4">{poll.description}</p>
 
-      <div className="space-y-3">
-        {poll.options.map((option) => (
-          <label
-            key={option.id}
-            className={`flex items-center space-x-3 p-3 border rounded-md cursor-pointer transition-all 
-              ${selectedOption === option.id ? "bg-primary text-white" : "border-gray-300 hover:bg-gray-100"}
-            `}
-          >
-            <input
-              type="checkbox"
-              checked={selectedOption === option.id}
-              onChange={() => handleVote(option.id)}
-              className="w-5 h-5 accent-white"
-            />
-            <span className="text-gray-700">{option.text}</span>
-          </label>
-        ))}
-      </div>
+      {poll.options?.length ? (
+        <div className="space-y-3">
+          {poll.options.map((option) => (
+            <label
+              key={option.id}
+              className={`flex items-center space-x-3 p-3 border rounded-md cursor-pointer transition-all 
+                ${selectedOption === option.id ? "bg-primary text-white" : "border-gray-300 hover:bg-gray-100"}
+              `}
+            >
+              <input
+                type="radio"
+                name="poll-option"
+                checked={selectedOption === option.id}
+                onChange={() => handleVote(option.id)}
+                className="w-5 h-5 accent-primary"
+              />
+              <span className="text-gray-700">{option.text}</span>
+            </label>
+          ))}
+        </div>
+      ) : (
+        <p className="text-center text-gray-500">No options available.</p>
+      )}
 
       <button
         onClick={submitVote}

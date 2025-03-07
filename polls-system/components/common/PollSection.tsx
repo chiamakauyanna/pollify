@@ -12,6 +12,9 @@ const PollSection: React.FC<DashboardCardProps>  = ({ title, polls }) => {
                           <p className="py-1 rounded text-sm">
                               {poll.description}
                           </p>
+                          <p className="py-1 rounded text-sm">
+                              {poll.expires_at}
+                          </p>
                       </div>
                   ))}
               </div>
