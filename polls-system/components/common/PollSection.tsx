@@ -21,7 +21,7 @@ const PollSection: React.FC<DashboardCardProps> = ({ title, polls = [] }) => {
           ))}
         </div>
       ) : (
-        <p className="text-secondary-text">No {title.toLowerCase()} polls.</p>
+        <p className="text-secondary-text">No {title.toLowerCase()}</p>
       )}
     </div>
   );
