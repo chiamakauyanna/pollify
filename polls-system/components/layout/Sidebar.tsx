@@ -5,8 +5,9 @@ import { selectSidebarState } from "@/redux/slices/sidebarSlice";
 import Logo from "../common/Logo";
 import { IoMdClose } from "react-icons/io";
 import { toggleSidebar } from "@/redux/slices/sidebarSlice";
+import { SidebarProps } from "@/Interfaces/interface";
 
-const Sidebar: React.FC = () => {
+const Sidebar: React.FC<SidebarProps> = () => {
   const isOpen = useSelector(selectSidebarState);
   const dispatch = useDispatch();
 

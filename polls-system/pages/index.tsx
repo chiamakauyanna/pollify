@@ -12,13 +12,11 @@ export default function Dashboard() {
   const dispatch = useDispatch<AppDispatch>();
   const activePollsData = useSelector((state: RootState) => selectActivePolls(state));
 
-
   useEffect(() => {
     dispatch(fetchActivePolls()); 
   }, [dispatch]);
   
   const activePolls = activePollsData || [];
-
 
   return (
     <section className="container mx-auto p-6">

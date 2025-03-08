@@ -135,9 +135,9 @@ export const fetchPollResults = async (id: string): Promise<PollResults> => {
 };
 
 // Function to vote in a poll
-export const voteInPoll = async (optionId: string): Promise<VoteResponse> => {
+export const voteInPoll = async (optionId: string, voterId: string): Promise<VoteResponse> => {
   try {
-    const response = await api.post(`/votes/`, { option: optionId });
+    const response = await api.post(`/votes/`, { option: optionId, voter_Id: voterId });
 
     console.log(response.data);
     return response.data;
@@ -149,3 +149,4 @@ export const voteInPoll = async (optionId: string): Promise<VoteResponse> => {
     throw new Error("An unexpected error occurred");
   }
 };
+

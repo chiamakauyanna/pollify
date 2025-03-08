@@ -1,5 +1,5 @@
 import { createSlice } from "@reduxjs/toolkit";
-import { RootState } from "../store"; // Import RootState for selector
+import { RootState } from "../store"; 
 
 // Initial State
 const initialState = {
@@ -11,7 +11,7 @@ const sidebarSlice = createSlice({
   initialState,
   reducers: {
     toggleSidebar: (state) => {
-      state.isOpen = !state.isOpen; // Toggle sidebar state
+      state.isOpen = !state.isOpen; 
     },
   },
 });
