@@ -1,7 +1,6 @@
 import {
   createSlice,
   createAsyncThunk,
-  PayloadAction,
   createSelector,
 } from "@reduxjs/toolkit";
 import {
@@ -15,118 +14,145 @@ import {
   fetchPollResults as fetchPollResultsService,
   voteInPoll as voteInPollService,
 } from "@/services/pollService";
-import { Poll } from "@/Interfaces/interface";
+import { Poll, PollResults, VoteResponse } from "@/Interfaces/interface";
 import { RootState } from "../store";
 
 // **Fetch Active Polls**
-export const fetchActivePolls = createAsyncThunk<Poll[], void, { rejectValue: string }>(
-  "polls/fetchActivePolls",
-  async (_, { rejectWithValue }) => {
-    try {
-      return await fetchActivePollsService();
-    } catch (error) {
-      return rejectWithValue(error instanceof Error ? error.message : "Error fetching active polls");
-    }
+export const fetchActivePolls = createAsyncThunk<
+  Poll[],
+  void,
+  { rejectValue: string }
+>("polls/fetchActivePolls", async (_, { rejectWithValue }) => {
+  try {
+    return await fetchActivePollsService();
+  } catch (error) {
+    return rejectWithValue(
+      error instanceof Error ? error.message : "Error fetching active polls"
+    );
   }
-);
+});
 
 // **Fetch All Polls**
-export const fetchPolls = createAsyncThunk<Poll[], void, { rejectValue: string }>(
-  "polls/fetchPolls",
-  async (_, { rejectWithValue }) => {
-    try {
-      return await fetchPollsService();
-    } catch (error) {
-      return rejectWithValue(error instanceof Error ? error.message : "Error fetching polls");
-    }
+export const fetchPolls = createAsyncThunk<
+  Poll[],
+  void,
+  { rejectValue: string }
+>("polls/fetchPolls", async (_, { rejectWithValue }) => {
+  try {
+    return await fetchPollsService();
+  } catch (error) {
+    return rejectWithValue(
+      error instanceof Error ? error.message : "Error fetching polls"
+    );
   }
-);
+});
 
 // **Fetch Poll By ID**
-export const fetchPollById = createAsyncThunk<Poll, number, { rejectValue: string }>(
-  "polls/fetchPollById",
-  async (id, { rejectWithValue }) => {
-    try {
-      return await fetchPollByIdService(id);
-    } catch (error) {
-      return rejectWithValue(error instanceof Error ? error.message : "Error fetching poll");
-    }
+export const fetchPollById = createAsyncThunk<
+  Poll,
+  string,
+  { rejectValue: string }
+>("polls/fetchPollById", async (id, { rejectWithValue }) => {
+  try {
+    return await fetchPollByIdService(id);
+  } catch (error) {
+    return rejectWithValue(
+      error instanceof Error ? error.message : "Error fetching poll"
+    );
   }
-);
+});
 
 // **Create a Poll**
-export const createPoll = createAsyncThunk<Poll, Omit<Poll, "id">, { rejectValue: string }>(
-  "polls/createPoll",
-  async (pollData, { rejectWithValue }) => {
-    try {
-      return await createPollService(pollData);
-    } catch (error) {
-      return rejectWithValue(error instanceof Error ? error.message : "Error creating poll");
-    }
+export const createPoll = createAsyncThunk<
+  Poll,
+  Omit<Poll, "id">,
+  { rejectValue: string }
+>("polls/createPoll", async (pollData, { rejectWithValue }) => {
+  try {
+    return await createPollService(pollData);
+  } catch (error) {
+    return rejectWithValue(
+      error instanceof Error ? error.message : "Error creating poll"
+    );
   }
-);
+});
 
 // **Update a Poll**
-export const updatePoll = createAsyncThunk<Poll, { id: number; pollData: Partial<Poll> }, { rejectValue: string }>(
-  "polls/updatePoll",
-  async ({ id, pollData }, { rejectWithValue }) => {
-    try {
-      return await updatePollService(id, pollData);
-    } catch (error) {
-      return rejectWithValue(error instanceof Error ? error.message : "Error updating poll");
-    }
+export const updatePoll = createAsyncThunk<
+  Poll,
+  { id: string; pollData: Partial<Poll> },
+  { rejectValue: string }
+>("polls/updatePoll", async ({ id, pollData }, { rejectWithValue }) => {
+  try {
+    return await updatePollService(id, pollData);
+  } catch (error) {
+    return rejectWithValue(
+      error instanceof Error ? error.message : "Error updating poll"
+    );
   }
-);
+});
 
 // **Delete a Poll**
-export const deletePoll = createAsyncThunk<number, number, { rejectValue: string }>(
-  "polls/deletePoll",
-  async (id, { rejectWithValue }) => {
-    try {
-      await deletePollService(id);
-      return id;
-    } catch (error) {
-      return rejectWithValue(error instanceof Error ? error.message : "Error deleting poll");
-    }
+export const deletePoll = createAsyncThunk<
+  string,
+  string,
+  { rejectValue: string }
+>("polls/deletePoll", async (id, { rejectWithValue }) => {
+  try {
+    await deletePollService(id);
+    return id;
+  } catch (error) {
+    return rejectWithValue(
+      error instanceof Error ? error.message : "Error deleting poll"
+    );
   }
-);
+});
 
 // **Add Options to a Poll**
-export const addPollOptions = createAsyncThunk<string[], { id: number; optionsData: string[] }, { rejectValue: string }>(
-  "polls/addPollOptions",
-  async ({ id, optionsData }, { rejectWithValue }) => {
-    try {
-      return await addPollOptionsService(id, optionsData);
-    } catch (error) {
-      return rejectWithValue(error instanceof Error ? error.message : "Error adding poll options");
-    }
+export const addPollOptions = createAsyncThunk<
+  string[],
+  { id: string; optionsData: string[] },
+  { rejectValue: string }
+>("polls/addPollOptions", async ({ id, optionsData }, { rejectWithValue }) => {
+  try {
+    return await addPollOptionsService(id, optionsData);
+  } catch (error) {
+    return rejectWithValue(
+      error instanceof Error ? error.message : "Error adding poll options"
+    );
   }
-);
+});
 
 // **Fetch Poll Results**
-export const fetchPollResults = createAsyncThunk<Poll[], number, { rejectValue: string }>(
-  "polls/fetchPollResults",
-  async (id, { rejectWithValue }) => {
-    try {
-      return await fetchPollResultsService(id);
-    } catch (error) {
-      return rejectWithValue(error instanceof Error ? error.message : "Error fetching poll results");
-    }
+export const fetchPollResults = createAsyncThunk<
+  PollResults,
+  string,
+  { rejectValue: string }
+>("polls/fetchPollResults", async (id, { rejectWithValue }) => {
+  try {
+    return await fetchPollResultsService(id);
+  } catch (error) {
+    return rejectWithValue(
+      error instanceof Error ? error.message : "Error fetching poll results"
+    );
   }
-);
+});
 
 // **Vote in a Poll**
-export const voteInPoll = createAsyncThunk<{ message: string }, string, { rejectValue: string }>(
-  "polls/voteInPoll",
-  async (optionId, { rejectWithValue }) => {
-    try {
-      return await voteInPollService(optionId);
-    } catch (error) {
-      return rejectWithValue(error instanceof Error ? error.message : "Vote failed");
-    }
+export const voteInPoll = createAsyncThunk<
+  VoteResponse,
+  string,
+  { rejectValue: string }
+>("polls/voteInPoll", async (optionId, { rejectWithValue }) => {
+  try {
+    const response = await voteInPollService(optionId);
+    return response;
+  } catch (error) {
+    return rejectWithValue(
+      error instanceof Error ? error.message : "Vote failed"
+    );
   }
-);
-
+});
 
 // **Poll Slice**
 const pollSlice = createSlice({
@@ -135,7 +161,7 @@ const pollSlice = createSlice({
     polls: [] as Poll[],
     activePolls: [] as Poll[],
     selectedPoll: null as Poll | null,
-    pollResults: null as any,
+    pollResults: {} as Record<string, PollResults>,
     loading: false,
     error: null as string | null,
   },
@@ -168,14 +194,20 @@ const pollSlice = createSlice({
         state.polls.push(action.payload);
       })
       .addCase(updatePoll.fulfilled, (state, action) => {
-        const index = state.polls.findIndex((poll) => poll.id === action.payload.id);
+        const index = state.polls.findIndex(
+          (poll) => poll.id === action.payload.id
+        );
         if (index !== -1) state.polls[index] = action.payload;
       })
-      .addCase(deletePoll.fulfilled, (state, action) => {
-        state.polls.results = state.polls.results.filter((poll) => poll.id !== action.payload);
+      .addCase(voteInPoll.fulfilled, (state, action) => {
+        console.log("Vote successful:", action.payload);
       })
       .addCase(voteInPoll.rejected, (state, action) => {
         state.error = action.payload || "Voting failed";
+      })
+      .addCase(fetchPollResults.fulfilled, (state, action) => {
+        if (!state.pollResults) state.pollResults = {};
+        state.pollResults[action.payload.id] = action.payload;
       });
   },
 });
@@ -185,11 +217,15 @@ export const selectPolls = (state: RootState) => state.polls.polls;
 export const selectActivePolls = (state: RootState) => state.polls.activePolls;
 export const selectPollLoading = (state: RootState) => state.polls.loading;
 export const selectPollError = (state: RootState) => state.polls.error;
+export const selectPollResults = (state: RootState) => state.polls.pollResults;
 
 // **Memoized Selector for Poll by ID**
-export const selectPollById = (pollId: number) =>
-  createSelector(selectPolls, (polls): Poll | null => polls.find((poll) => poll.id === pollId) || null);
-
+export const selectPollById = (pollId: string) =>
+  createSelector(
+    selectPolls,
+    (polls: Poll[]): Poll | null =>
+      polls.find((poll) => poll.id === pollId) || null
+  );
 
 // **Export Reducer**
 export default pollSlice.reducer;

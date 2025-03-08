@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { useSelector, useDispatch } from "react-redux";
-import { fetchPolls, selectPolls } from "@/redux/slices/pollSlice";
+import { fetchActivePolls, selectActivePolls } from "@/redux/slices/pollSlice";
 import { RootState, AppDispatch } from "@/redux/store";
 import Button from "@/components/common/Button";
 import Link from "next/link";
@@ -10,14 +10,15 @@ import { Plus, Settings } from "lucide-react";
 
 export default function Dashboard() {
   const dispatch = useDispatch<AppDispatch>();
-  const pollData = useSelector((state: RootState) => selectPolls(state));
+  const activePollsData = useSelector((state: RootState) => selectActivePolls(state));
+
 
   useEffect(() => {
-    dispatch(fetchPolls()); // Fetch active polls
+    dispatch(fetchActivePolls()); 
   }, [dispatch]);
+  
+  const activePolls = activePollsData || [];
 
-  // Ensure we have data and access the 'results' array
-  const activePolls = pollData?.results || [];
 
   return (
     <section className="container mx-auto p-6">
@@ -43,7 +44,7 @@ export default function Dashboard() {
 
       {/* Active Polls Section */}
       <div className="mt-10">
-        <PollSection title="Active Polls" polls={activePolls} color="green" />
+        <PollSection title="Active Polls" polls={activePolls} />
       </div>
     </section>
   );

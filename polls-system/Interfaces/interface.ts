@@ -7,6 +7,7 @@ export interface ButtonProps {
   onClick?: () => void;
   className?: string;
   type?: "button" | "submit";
+  icon?: React.ReactNode;
 }
 
 export interface SidebarProps {
@@ -18,31 +19,22 @@ export interface HeaderProps {
   toggleSidebar: () => void;
 }
 
-export interface Poll {
-  id: string;
-  title: string;
-  description?: string;
-  question: string;
-  created_at: string;
-  expires_at?: string | null;
-  is_active?: boolean; // This determines if the poll is ongoing
-  options: { id: string; text: string; created_at: string }[];
-  createdAt: string;
-  updatedAt: string;
-}
-
-
-export interface Candidate {
-  name: string;
-  votes: number;
-}
-
 export interface PollOption {
-  id: number;
-  text: string;
-  votes: number;
+  id?: string;
+  text?: string;
+  vote_count?: number;
 }
 
+export interface Poll {
+  id?: string;
+  title?: string;
+  description?: string;
+  createdAt?: string;
+  expires_at?: string | null;
+  isActive?: boolean;
+  options?: PollOption[];
+  updatedAt?: string;
+}
 export interface PollState {
   polls: Poll[];
   activePolls: Poll[];
@@ -50,20 +42,30 @@ export interface PollState {
   pollResults: unknown;
   loading: boolean;
   error: string | null;
+  results: Poll[];
 }
-
-
-export interface DashboardCardProps  {
+export interface DashboardCardProps {
   title: string;
   count?: number;
-  polls?: Poll[];
-};
-
-export interface PollData {
-  title: string;
-  description?: string;
-  expires_at?: string | null; 
-  options: { text: string }[];
+  polls?: Poll[] | undefined;
+}
+export interface ResultsChartProps {
+  options: PollOption[];
 }
 
+export interface PollResults {
+  id: string;
+  title: string;
+  description?: string;
+  created_at: string;
+  expires_at?: string;
+  is_active?: boolean;
+  total_votes?: string;
+  options?: string;
+}
 
+export interface VoteResponse {
+  id: string;
+  option: string;
+  voted_at: string;
+}

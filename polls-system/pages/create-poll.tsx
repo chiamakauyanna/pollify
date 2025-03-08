@@ -3,15 +3,15 @@ import { useDispatch } from "react-redux";
 import { AppDispatch } from "@/redux/store";
 import { createPoll } from "@/redux/slices/pollSlice";
 import Button from "@/components/common/Button";
-import { PollData } from "@/Interfaces/interface";
-
+import { Poll } from "@/Interfaces/interface";
 
 const CreatePoll: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
   const [title, setTitle] = useState<string>("");
   const [description, setDescription] = useState<string>("");
-  const [expiresAt, setExpiresAt] = useState<string>(""); // Optional
+  const [expiresAt, setExpiresAt] = useState<string>("");
   const [options, setOptions] = useState<string[]>(["", ""]);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
   // Handle Poll Submission
   const handleSubmit = async (e: React.FormEvent) => {
@@ -22,22 +22,32 @@ const CreatePoll: React.FC = () => {
       return;
     }
 
-    const formattedPollData: PollData = {
+    const formattedPollData: Poll = {
+      id: '', 
       title,
-      description: description.trim() || undefined, // Optional
-      expires_at: expiresAt.trim() || null, // Optional
-      options: options.map((opt) => ({ text: opt.trim() })),
+      description: description.trim() || undefined,
+      expires_at: expiresAt.trim() || null,
+      options: options.map((opt) => ({
+        id: '', 
+        text: opt.trim(),
+      })),
     };
 
     try {
       const response = await dispatch(createPoll(formattedPollData)).unwrap();
       console.log("Poll created successfully:", response);
 
+      // Show success message
+      setSuccessMessage("Poll created successfully!");
+
       // Reset Form
       setTitle("");
       setDescription("");
       setExpiresAt("");
       setOptions(["", ""]);
+
+      // Hide message after 3 seconds
+      setTimeout(() => setSuccessMessage(null), 3000);
     } catch (error) {
       console.error("Error creating poll:", error);
     }
@@ -46,6 +56,13 @@ const CreatePoll: React.FC = () => {
   return (
     <div className="max-w-lg mx-auto bg-white shadow-lg rounded-lg p-4">
       <h1 className="text-2xl font-bold mb-4">Create a New Poll</h1>
+
+      {successMessage && (
+        <div className="bg-green-100 text-green-800 p-2 rounded mb-4">
+          {successMessage}
+        </div>
+      )}
+
       <form onSubmit={handleSubmit} className="space-y-4">
         <input
           type="text"
@@ -90,7 +107,11 @@ const CreatePoll: React.FC = () => {
           className="bg-gray-200 text-black py-2"
         />
 
-        <Button text="Create Poll" type="submit" className="bg-primary py-3 text-white" />
+        <Button
+          text="Create Poll"
+          type="submit"
+          className="bg-primary py-3 text-white"
+        />
       </form>
     </div>
   );

@@ -1,41 +1,49 @@
-import { PieChart, Pie, Tooltip, Cell } from "recharts";
+import { ResultsChartProps } from "@/Interfaces/interface";
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  Tooltip,
+  ResponsiveContainer,
+  Cell,
+} from "recharts";
 
-interface PollOption {
-  text: string;
-  votes_count: number;
-}
-
-interface ResultsChartProps {
-  options: PollOption[];
-}
-
-const colors = ["#FF6384", "#36A2EB", "#FFCE56", "#4BC0C0", "#9966FF", "#FF9F40"];
+const colors = [
+  "#FF6384",
+  "#36A2EB",
+  "#FFCE56",
+  "#4BC0C0",
+  "#9966FF",
+  "#FF9F40",
+];
 
 const ResultsChart: React.FC<ResultsChartProps> = ({ options }) => {
-  if (!options || options.length === 0) return <p className="text-center">No votes yet.</p>;
+  if (!options?.length) return <p className="text-center">No votes yet.</p>;
 
   const chartData = options.map((option) => ({
     name: option.text,
-    value: option.votes_count, // Ensure correct key for recharts
+    value: option.vote_count,
   }));
 
   return (
-    <PieChart width={400} height={400}>
-      <Pie
-        data={chartData}
-        dataKey="value"
-        nameKey="name"
-        cx="50%"
-        cy="50%"
-        outerRadius={120}
-        label
-      >
-        {chartData.map((_, index) => (
-          <Cell key={`cell-${index}`} fill={colors[index % colors.length]} />
-        ))}
-      </Pie>
-      <Tooltip />
-    </PieChart>
+    <div className="w-full h-64">
+      <ResponsiveContainer width="100%" height="100%">
+        <BarChart data={chartData} layout="vertical">
+          <XAxis type="number" hide />
+          <YAxis type="category" dataKey="name" width={100} />
+          <Tooltip />
+          <Bar dataKey="value" fill="#8884d8">
+            {chartData.map((_, index) => (
+              <Cell
+                key={`cell-${index}`}
+                fill={colors[index % colors.length]}
+              />
+            ))}
+          </Bar>
+        </BarChart>
+      </ResponsiveContainer>
+    </div>
   );
 };
 

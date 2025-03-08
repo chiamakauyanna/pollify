@@ -1,19 +1,20 @@
 import { useEffect } from "react";
 import { useSelector, useDispatch } from "react-redux";
-import { fetchPolls, selectPolls } from "@/redux/slices/pollSlice";
+import { fetchActivePolls, selectActivePolls } from "@/redux/slices/pollSlice";
 import Link from "next/link";
-import { AppDispatch } from "@/redux/store";
+import { AppDispatch, RootState } from "@/redux/store";
 import { CheckSquare, BarChart2 } from "lucide-react"; // Import vote & results icons
 
 const Vote = () => {
   const dispatch = useDispatch<AppDispatch>();
-  const pollData = useSelector(selectPolls);
-
-  useEffect(() => {
-    dispatch(fetchPolls());
-  }, [dispatch]);
-
-  const activePolls = pollData?.results || [];
+ const activePollsData = useSelector((state: RootState) => selectActivePolls(state)) 
+ 
+ 
+   useEffect(() => {
+     dispatch(fetchActivePolls()); 
+   }, [dispatch]);
+   
+   const activePolls = activePollsData || [];
 
   return (
     <div className="max-w-2xl mx-auto p-6">
