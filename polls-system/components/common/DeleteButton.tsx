@@ -2,7 +2,7 @@ import { useDispatch } from "react-redux";
 import { AppDispatch } from "@/redux/store";
 import { deletePoll } from "@/redux/slices/pollSlice";
 
-const DeleteButton = ({ pollId }: { pollId: number }) => {
+const DeleteButton = ({ pollId }: { pollId: string }) => {
   const dispatch = useDispatch<AppDispatch>();
 
   const handleDelete = () => {
