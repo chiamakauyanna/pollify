@@ -30,7 +30,6 @@ online-polling-system/
 ### Prerequisites
 
 - Node.js (v16+)
-- PostgreSQL
 - Git
 
 ### Installation
