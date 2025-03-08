@@ -5,10 +5,10 @@ import {
   fetchActivePolls,
   selectActivePolls,
   updatePoll,
-  deletePoll,
 } from "@/redux/slices/pollSlice";
 import { Poll, PollOption } from "@/Interfaces/interface";
-import { Edit, Plus, Trash2, X } from "lucide-react";
+import { Edit, Plus, X } from "lucide-react";
+import DeleteButton from "@/components/common/DeleteButton";
 
 const ManagePolls = () => {
   const dispatch = useDispatch<AppDispatch>();
@@ -185,13 +185,9 @@ const ManagePolls = () => {
                       <Edit size={16} />
                       Edit
                     </button>
-                    <button
-                      onClick={() => poll.id && dispatch(deletePoll(poll.id))}
-                      className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 flex items-center gap-2"
-                    >
-                      <Trash2 size={16} />
-                      Delete
-                    </button>
+
+                    {/* Integrated DeleteButton component */}
+                    <DeleteButton pollId={String(poll.id)} />
                   </div>
                 </div>
               )}

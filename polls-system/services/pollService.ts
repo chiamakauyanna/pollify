@@ -135,9 +135,9 @@ export const fetchPollResults = async (id: string): Promise<PollResults> => {
 };
 
 // Function to vote in a poll
-export const voteInPoll = async (optionId: string, voterId: string): Promise<VoteResponse> => {
+export const voteInPoll = async (optionId: string, voterId: string, poll: unknown): Promise<VoteResponse> => {
   try {
-    const response = await api.post(`/votes/`, { option: optionId, voter_Id: voterId });
+    const response = await api.post(`/votes/`, { option: optionId, vote: voterId, poll: poll });
 
     console.log(response.data);
     return response.data;

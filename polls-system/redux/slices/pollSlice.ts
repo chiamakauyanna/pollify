@@ -141,11 +141,11 @@ export const fetchPollResults = createAsyncThunk<
 // **Vote in a Poll**
 export const voteInPoll = createAsyncThunk<
   VoteResponse,
-  { optionId: string; voterId: string },
+  { optionId: string; voterId: string; poll: unknown },
   { rejectValue: string }
->("polls/voteInPoll", async ({ optionId, voterId }, { rejectWithValue }) => {
+>("polls/voteInPoll", async ({ optionId, voterId, poll }, { rejectWithValue }) => {
   try {
-    const response = await voteInPollService(optionId, voterId);
+    const response = await voteInPollService(optionId, voterId, poll);
     return response;
   } catch (error) {
     return rejectWithValue(
