@@ -2,13 +2,13 @@
 @import url("https://fonts.googleapis.com/css2?family=Fredoka:wght@300..700&family=Nunito:ital,wght@0,200..1000;1,200..1000&display=swap");
 
 @theme {
-  --color-primary: #4caf50; /* Main brand color */
-  --color-secondary: #388E3C; /* Accent color */
-  --color-background: #f8f8f8; /* Background */
-  --color-text: #444444; /* Main text color */
+  --color-primary: #4caf50; 
+  --color-secondary: #388E3C; 
+  --color-background: #f8f8f8; 
+  --color-text: #444444;
   --color-secondary-text: #757575;
-  --color-border: #BDBDBD; /* Default border color */
-  --color-hover: #388E3C; /* Hover state */
+  --color-border: #BDBDBD; 
+  --color-hover: #388E3C; 
 }
 
 /* Global Styles */
