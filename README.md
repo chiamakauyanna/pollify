@@ -7,9 +7,8 @@ Pollify is an online polling system that allows users to create, manage, and par
 ## Repository Structure
 
 ```
-online-polling-system/
-  ├── polls-system/  # Main application folder
-  ├── frontend/      # React frontend
+pollify/
+  ├── online-poll-system/  # Main application folder
 ```
 
 ## Features
@@ -36,11 +35,11 @@ online-polling-system/
 
 1. Clone the repository:
    ```sh
-   git clone https://github.com/yourusername/online-polling-system.git
+   git clone https://github.com/chiamakauyanna/pollify.git
    ```
 2. Navigate to the project folder:
    ```sh
-   cd online-polling-system/polls-system
+   cd pollify/online-poll-system
    ```
 3. Install dependencies:
    ```sh
