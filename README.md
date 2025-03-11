@@ -13,7 +13,6 @@ pollify/
 
 ## Features
 
-- User authentication
 - Create, edit, and delete polls
 - Vote in polls
 - View poll results

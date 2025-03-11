@@ -7,111 +7,129 @@ import { Poll } from "@/Interfaces/interface";
 
 const CreatePoll: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
+
   const [title, setTitle] = useState<string>("");
   const [description, setDescription] = useState<string>("");
   const [expiresAt, setExpiresAt] = useState<string>("");
   const [options, setOptions] = useState<string[]>(["", ""]);
-  const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [loading, setLoading] = useState<boolean>(false);
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null); 
 
   // Handle Poll Submission
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError(null);
+    setSuccess(null);
 
     if (!title.trim() || options.some((opt) => !opt.trim())) {
-      alert("Poll title and all options are required!");
+      setError("Poll title and all options are required!");
       return;
     }
 
     const formattedPollData: Poll = {
-      id: '', 
+      id: "",
       title,
       description: description.trim() || undefined,
       expires_at: expiresAt.trim() || null,
       options: options.map((opt) => ({
-        id: '', 
+        id: "",
         text: opt.trim(),
       })),
     };
 
+    setLoading(true);
     try {
-      const response = await dispatch(createPoll(formattedPollData)).unwrap();
-      console.log("Poll created successfully:", response);
-
-      // Show success message
-      setSuccessMessage("Poll created successfully!");
-
-      // Reset Form
+      await dispatch(createPoll(formattedPollData)).unwrap();
+      setSuccess("Poll created successfully!"); 
+      setTimeout(() => setSuccess(null), 3000);
       setTitle("");
       setDescription("");
       setExpiresAt("");
       setOptions(["", ""]);
-
-      // Hide message after 3 seconds
-      setTimeout(() => setSuccessMessage(null), 3000);
-    } catch (error) {
+    } catch (error: unknown) {
       console.error("Error creating poll:", error);
+      setError("Failed to create poll. Please try again.");
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <div className="max-w-lg mx-auto bg-white shadow-lg rounded-lg p-4">
+    <div className="max-w-lg mx-auto bg-white shadow-lg rounded-lg p-6">
       <h1 className="text-2xl font-bold mb-4">Create a New Poll</h1>
 
-      {successMessage && (
-        <div className="bg-green-100 text-green-800 p-2 rounded mb-4">
-          {successMessage}
+      {error && (
+        <div className="bg-red-100 text-red-800 p-2 rounded mb-4">{error}</div>
+      )}
+
+      {success && (
+        <div className="bg-green-100 text-green-800 p-2 rounded mb-4 transition-opacity duration-500">
+          {success}
         </div>
       )}
 
       <form onSubmit={handleSubmit} className="space-y-4">
-        <input
-          type="text"
-          placeholder="Poll Title"
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-          className="w-full p-2 border border-gray-300 rounded"
-        />
-
-        <textarea
-          placeholder="Description (optional)"
-          value={description}
-          onChange={(e) => setDescription(e.target.value)}
-          className="w-full p-2 border border-gray-300 rounded"
-        />
-
-        <input
-          type="datetime-local"
-          value={expiresAt}
-          onChange={(e) => setExpiresAt(e.target.value)}
-          className="w-full p-2 border border-gray-300 rounded"
-        />
-
-        {options.map((option, index) => (
+        <div>
+          <label className="block font-medium">Poll Title</label>
           <input
-            key={index}
             type="text"
-            placeholder={`Option ${index + 1}`}
-            value={option}
-            onChange={(e) => {
-              const newOptions = [...options];
-              newOptions[index] = e.target.value;
-              setOptions(newOptions);
-            }}
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
             className="w-full p-2 border border-gray-300 rounded"
           />
+        </div>
+
+        <div>
+          <label className="block font-medium">Description (optional)</label>
+          <textarea
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            className="w-full p-2 border border-gray-300 rounded"
+          />
+        </div>
+
+        <div>
+          <label className="block font-medium">Expiration Date</label>
+          <input
+            type="datetime-local"
+            value={expiresAt}
+            onChange={(e) => setExpiresAt(e.target.value)}
+            className="w-full p-2 border border-gray-300 rounded"
+          />
+        </div>
+
+        {options.map((option, index) => (
+          <div key={index}>
+            <label className="block font-medium">{`Option ${index + 1}`}</label>
+            <input
+              type="text"
+              value={option}
+              onChange={(e) => {
+                const newOptions = [...options];
+                newOptions[index] = e.target.value;
+                setOptions(newOptions);
+              }}
+              className="w-full p-2 border border-gray-300 rounded"
+            />
+          </div>
         ))}
 
         <Button
-          text="Add Option"
           onClick={() => setOptions([...options, ""])}
           className="bg-gray-200 text-black py-2"
-        />
+          disabled={loading}
+        >
+          Add Option
+        </Button>
 
         <Button
-          text="Create Poll"
           type="submit"
-          className="bg-primary py-3 text-white"
-        />
+          className="bg-primary py-3 text-white w-full"
+          disabled={loading}
+        >
+          {loading ? "Creating..." : "Create Poll"}
+        </Button>
       </form>
     </div>
   );

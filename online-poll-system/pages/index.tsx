@@ -7,22 +7,45 @@ import Link from "next/link";
 import PollSection from "@/components/common/PollSection";
 import DashboardCard from "@/components/common/DashboardCard";
 import { Plus, Settings } from "lucide-react";
+import Loader from "@/components/common/Loader";
 
 export default function Dashboard() {
   const dispatch = useDispatch<AppDispatch>();
-  const activePollsData = useSelector((state: RootState) => selectActivePolls(state));
+
+  const { activePolls, loading, error } = useSelector((state: RootState) => ({
+    activePolls: selectActivePolls(state) || [],
+    loading: state.polls.loading,
+    error: state.polls.error,
+  }));
 
   useEffect(() => {
-    dispatch(fetchActivePolls()); 
+    dispatch(fetchActivePolls());
   }, [dispatch]);
-  
-  const activePolls = activePollsData || [];
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <Loader />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex items-center justify-center h-screen text-red-500">
+        <p>Error: {error}</p>
+      </div>
+    );
+  }
 
   return (
     <section className="container mx-auto p-6">
+      {/* Dashboard Header */}
       <div className="mb-6">
-        <h1 className="text-3xl font-bold text-primary mb-2">Welcome to Pollify</h1>
-        <p className="">Manage and monitor active polls easily.</p>
+        <h1 className="text-3xl font-bold text-primary mb-2">
+          Welcome to Pollify
+        </h1>
+        <p>Manage and monitor active polls easily.</p>
       </div>
 
       {/* Dashboard Summary */}
@@ -30,18 +53,28 @@ export default function Dashboard() {
         <DashboardCard title="Active Polls" count={activePolls.length} />
       </div>
 
-      {/* Action Buttons */}
       <div className="flex gap-4 mt-6">
         <Link href="/create-poll">
-          <Button icon={<Plus size={20} />} text="Create Poll" className="bg-primary text-background py-3.5 px-6 hover:bg-secondary" />
+          <Button
+            icon={<Plus size={20} />}
+            text=""
+            className="bg-primary text-background py-3.5 px-6 hover:bg-secondary"
+          >
+            Create Poll
+          </Button>
         </Link>
         <Link href="/manage-poll">
-          <Button icon={<Settings size={20} />} text="Manage Polls" className="border border-primary hover:bg-secondary hover:text-background text-primary py-3 px-6" />
+          <Button
+            icon={<Settings size={20} />}
+            className="border border-primary hover:bg-secondary hover:text-background text-primary py-3 px-6"
+          >
+            Manage Polls
+          </Button>
         </Link>
       </div>
 
       {/* Active Polls Section */}
-      <div className="mt-10">
+      <div className="mt-8">
         <PollSection title="Active Polls" polls={activePolls} />
       </div>
     </section>

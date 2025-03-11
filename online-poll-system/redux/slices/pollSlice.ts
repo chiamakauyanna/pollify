@@ -200,8 +200,8 @@ const pollSlice = createSlice({
         );
         if (index !== -1) state.polls[index] = action.payload;
       })
-      .addCase(voteInPoll.fulfilled, (state, action) => {
-        console.log("Vote successful:", action.payload);
+      .addCase(voteInPoll.fulfilled, () => {
+        // No need to manually update state
       })
       .addCase(voteInPoll.rejected, (state, action) => {
         state.error = action.payload || "Voting failed";
@@ -213,14 +213,14 @@ const pollSlice = createSlice({
   },
 });
 
-// **Selectors**
+// Selectors
 export const selectPolls = (state: RootState) => state.polls.polls;
 export const selectActivePolls = (state: RootState) => state.polls.activePolls;
 export const selectPollLoading = (state: RootState) => state.polls.loading;
 export const selectPollError = (state: RootState) => state.polls.error;
 export const selectPollResults = (state: RootState) => state.polls.pollResults;
 
-// **Memoized Selector for Poll by ID**
+// Memoized Selector for Poll by ID
 export const selectPollById = (pollId: string) =>
   createSelector(
     selectPolls,
@@ -228,5 +228,5 @@ export const selectPollById = (pollId: string) =>
       polls.find((poll) => poll.id === pollId) || null
   );
 
-// **Export Reducer**
+// Export Reducer
 export default pollSlice.reducer;

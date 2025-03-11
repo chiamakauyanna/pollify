@@ -2,13 +2,15 @@ import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch, RootState } from "@/redux/store";
 import {
+  deletePoll,
   fetchActivePolls,
   selectActivePolls,
   updatePoll,
 } from "@/redux/slices/pollSlice";
 import { Poll, PollOption } from "@/Interfaces/interface";
-import { Edit, Plus, X } from "lucide-react";
-import DeleteButton from "@/components/common/DeleteButton";
+import { Plus, X } from "lucide-react";
+import Loader from "@/components/common/Loader";
+import ConfirmButton from "@/components/common/ConfirmButton";
 
 const ManagePolls = () => {
   const dispatch = useDispatch<AppDispatch>();
@@ -17,28 +19,43 @@ const ManagePolls = () => {
   );
   const activePolls = activePollsData || [];
   const [editPoll, setEditPoll] = useState<Poll | null>(null);
+  const [loading, setLoading] = useState<boolean>(false);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    dispatch(fetchActivePolls());
+    setLoading(true);
+    dispatch(fetchActivePolls())
+      .unwrap()
+      .catch(() => setError("Failed to load polls. Please try again."))
+      .finally(() => setLoading(false));
   }, [dispatch]);
 
-  const handleUpdate = () => {
+  const handleUpdate = async () => {
     if (editPoll) {
-      dispatch(
-        updatePoll({
-          id: editPoll.id || "",
-          pollData: {
-            title: editPoll.title,
-            description: editPoll.description,
-            expires_at: editPoll.expires_at,
-            options: editPoll?.options?.map((opt: PollOption) => ({
-              id: opt.id,
-              text: opt.text,
-            })),
-          },
-        })
-      );
-      setEditPoll(null);
+      setLoading(true);
+      setError(null);
+
+      try {
+        await dispatch(
+          updatePoll({
+            id: editPoll.id || "",
+            pollData: {
+              title: editPoll.title,
+              description: editPoll.description,
+              expires_at: editPoll.expires_at,
+              options: editPoll?.options?.map((opt: PollOption) => ({
+                id: opt.id,
+                text: opt.text,
+              })),
+            },
+          })
+        ).unwrap();
+        setEditPoll(null);
+      } catch {
+        setError("Failed to update poll. Please try again.");
+      } finally {
+        setLoading(false);
+      }
     }
   };
 
@@ -60,17 +77,32 @@ const ManagePolls = () => {
     }
   };
 
+  const formatDateForInput = (isoString: string) => {
+    const date = new Date(isoString);
+    return date.toISOString().slice(0, 16);
+  };
+
   return (
     <div className="max-w-3xl mx-auto p-6 bg-white shadow-lg rounded-lg">
       <h1 className="text-2xl font-bold mb-4">Manage Polls</h1>
 
-      {activePolls.length > 0 ? (
+      {loading && <Loader />}
+      {error && (
+        <div className="bg-red-100 text-red-800 p-2 rounded mb-4">{error}</div>
+      )}
+
+      {!loading && activePolls.length === 0 && (
+        <p className="text-gray-500 text-center">No polls available.</p>
+      )}
+
+      {!loading && activePolls.length > 0 && (
         <ul className="space-y-4">
           {activePolls.map((poll) => (
             <li key={poll.id} className="p-4 rounded-lg shadow-md">
               {editPoll?.id === poll.id ? (
                 <div>
                   {/* Editable Title & Description */}
+                  <label className="block font-semibold">Title</label>
                   <input
                     type="text"
                     value={editPoll?.title}
@@ -79,6 +111,8 @@ const ManagePolls = () => {
                     }
                     className="w-full p-2 mb-2 border rounded"
                   />
+
+                  <label className="block font-semibold">Description</label>
                   <textarea
                     value={editPoll?.description || ""}
                     onChange={(e) =>
@@ -93,7 +127,11 @@ const ManagePolls = () => {
                   </label>
                   <input
                     type="datetime-local"
-                    value={editPoll?.expires_at || ""}
+                    value={
+                      editPoll?.expires_at
+                        ? formatDateForInput(editPoll.expires_at)
+                        : ""
+                    }
                     onChange={(e) =>
                       setEditPoll({ ...editPoll, expires_at: e.target.value })
                     }
@@ -142,12 +180,12 @@ const ManagePolls = () => {
 
                   {/* Action Buttons */}
                   <div className="flex justify-between mt-4">
-                    <button
-                      onClick={handleUpdate}
+                    <ConfirmButton
+                      text="Save"
+                      onConfirm={handleUpdate}
                       className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
-                    >
-                      Save
-                    </button>
+                      disabled={loading}
+                    />
                     <button
                       onClick={() => setEditPoll(null)}
                       className="bg-gray-400 text-white px-4 py-2 rounded hover:bg-gray-500"
@@ -158,10 +196,8 @@ const ManagePolls = () => {
                 </div>
               ) : (
                 <div>
-                  {/* Display Title, Description, Expiration Date, and Options */}
                   <h2 className="text-xl font-semibold">{poll.title}</h2>
                   <p>{poll.description}</p>
-
                   <p className="mt-1">
                     <strong>Expires at:</strong>{" "}
                     {poll.expires_at
@@ -178,24 +214,22 @@ const ManagePolls = () => {
 
                   {/* Edit & Delete Buttons */}
                   <div className="flex justify-end space-x-2 mt-2">
-                    <button
-                      onClick={() => setEditPoll(poll)}
+                    <ConfirmButton
+                      text="Edit"
+                      onConfirm={() => setEditPoll(poll)}
                       className="bg-yellow-500 text-white px-4 py-2 rounded hover:bg-yellow-600 flex items-center gap-2"
-                    >
-                      <Edit size={16} />
-                      Edit
-                    </button>
-
-                    {/* Integrated DeleteButton component */}
-                    <DeleteButton pollId={String(poll.id)} />
+                    />
+                    <ConfirmButton
+                      text="Delete"
+                      onConfirm={() => dispatch(deletePoll(String(poll.id)))}
+                      className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600"
+                    />
                   </div>
                 </div>
               )}
             </li>
           ))}
         </ul>
-      ) : (
-        <p className="text-gray-500 text-center">No polls available.</p>
       )}
     </div>
   );

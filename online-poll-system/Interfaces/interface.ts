@@ -3,11 +3,13 @@ export interface LayoutProps {
 }
 
 export interface ButtonProps {
-  text: string;
+  text?: string;
   onClick?: () => void;
   className?: string;
   type?: "button" | "submit";
   icon?: React.ReactNode;
+  disabled?: boolean; 
+  children?: React.ReactNode;
 }
 
 export interface SidebarProps {

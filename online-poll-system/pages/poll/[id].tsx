@@ -4,6 +4,7 @@ import { fetchActivePolls, voteInPoll } from "@/redux/slices/pollSlice";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
+import Loader from "@/components/common/Loader";
 
 const PollDetails = () => {
   const router = useRouter();
@@ -11,11 +12,13 @@ const PollDetails = () => {
   const dispatch = useDispatch<AppDispatch>();
   const ActivePollData = useSelector(selectActivePolls);
   const [selectedOption, setSelectedOption] = useState<string | null>(null);
-  
+  const [loading, setLoading] = useState<boolean>(false);
+
   const voterId = "12345"; // Simulated voter ID (should be dynamic in real app)
-  
+
   // Get voted polls from localStorage
-  const hasVoted = typeof window !== "undefined" && localStorage.getItem(`voted_poll_${id}`);
+  const hasVoted =
+    typeof window !== "undefined" && localStorage.getItem(`voted_poll_${id}`);
 
   useEffect(() => {
     if (id) {
@@ -23,7 +26,7 @@ const PollDetails = () => {
     }
   }, [dispatch, id]);
 
-  if (!ActivePollData) return <p className="text-center">Loading poll...</p>;
+  if (!ActivePollData) return <p className="flex justify-center items-center"><Loader/></p>;
 
   const poll = ActivePollData.find((p) => String(p.id) === String(id));
 
@@ -39,27 +42,32 @@ const PollDetails = () => {
       return;
     }
 
-    console.log("Submitting vote for option:", selectedOption, "Voter ID:", voterId, "poll:", poll);
+    setLoading(true);
 
     dispatch(voteInPoll({ optionId: selectedOption, voterId, poll }))
       .unwrap()
       .then(() => {
-        // Save the voted poll in localStorage
         localStorage.setItem(`voted_poll_${id}`, "true");
-
         alert("Vote submitted successfully!");
-        router.push(`/poll/${id}/results`); // Redirect to results page
+        router.push(`/poll/${id}/results`);
       })
-      .catch((error) => alert(`Voting failed: ${error}`));
+      .catch((error) => alert(`Voting failed: ${error}`))
+      .finally(() => {
+        setLoading(false); 
+      });
   };
 
   return (
     <div className="max-w-lg mx-auto p-6 bg-white shadow-lg rounded-lg">
-      <h1 className="text-2xl font-bold mb-2">{poll.title}</h1>
-      <p className="mb-4">{poll.description}</p>
+      <h1 className="lg:text-xl md:text-lg text-lg font-semibold mb-2">
+        {poll.title}
+      </h1>
+      <p className="mb-4 text-sm">{poll.description}</p>
 
       {hasVoted ? (
-        <p className="text-center text-green-500 text-lg">You have already voted in this poll.</p>
+        <p className="text-center text-green-500 text-lg">
+          You have already voted in this poll.
+        </p>
       ) : poll.options?.length ? (
         <div className="space-y-3">
           {poll.options.map((option) => (
@@ -80,7 +88,7 @@ const PollDetails = () => {
                 onChange={() => handleVote(String(option.id))}
                 className="w-5 h-5 accent-primary"
               />
-              <span className="text-gray-700">{option.text}</span>
+              <span className="text-gray-700 text-sm">{option.text}</span>
             </label>
           ))}
         </div>
@@ -92,7 +100,7 @@ const PollDetails = () => {
         <button
           onClick={submitVote}
           disabled={!selectedOption}
-          className={`mt-4 w-full py-3 px-4 font-semibold rounded-md transition-all
+          className={`mt-4 w-full py-3 px-4 font-semibold rounded-md transition-all text-sm
             ${
               selectedOption
                 ? "bg-secondary text-white hover:bg-primary-dark"
@@ -100,14 +108,14 @@ const PollDetails = () => {
             }
           `}
         >
-          Submit Vote
+          {loading ? "Submitting" : "Submit Vote"}
         </button>
       )}
 
       {/* Go Back Button */}
       <button
         onClick={() => router.push("/vote")}
-        className="mt-4 w-full py-3 px-4 font-semibold rounded-md border border-gray-400 text-gray-700 hover:bg-gray-100 transition-all"
+        className="mt-4 w-full py-3 px-4 font-semibold rounded-md border border-gray-400 text-gray-700 hover:bg-gray-100 transition-all text-sm"
       >
         Go Back
       </button>
