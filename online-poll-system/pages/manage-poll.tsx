@@ -1,238 +1,268 @@
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
+import { useRouter } from "next/router";
 import { AppDispatch, RootState } from "@/redux/store";
 import {
   deletePoll,
   fetchActivePolls,
-  selectActivePolls,
+  fetchPollById,
   updatePoll,
+  addPollOptions,
 } from "@/redux/slices/pollSlice";
-import { Poll, PollOption } from "@/Interfaces/interface";
-import { Plus, X } from "lucide-react";
-import Loader from "@/components/common/Loader";
+import { Poll } from "@/Interfaces/interface";
+import Button from "@/components/common/Button";
 import ConfirmButton from "@/components/common/ConfirmButton";
 
-const ManagePolls = () => {
+const ManagePoll: React.FC = () => {
+  const router = useRouter();
+  const id = router.query.id as string;
   const dispatch = useDispatch<AppDispatch>();
-  const activePollsData = useSelector((state: RootState) =>
-    selectActivePolls(state)
+
+  const [deletingPollId, setDeletingPollId] = useState<string | null>(null);
+  const [optionText, setOptionText] = useState("");
+  const [newOptions, setNewOptions] = useState<string[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [message, setMessage] = useState<{
+    type: "success" | "error";
+    text: string;
+  } | null>(null);
+
+  const activePolls = useSelector(
+    (state: RootState) => state.polls.activePolls
   );
-  const activePolls = activePollsData || [];
-  const [editPoll, setEditPoll] = useState<Poll | null>(null);
-  const [loading, setLoading] = useState<boolean>(false);
-  const [error, setError] = useState<string | null>(null);
+  const poll = useSelector((state: RootState) =>
+    state.polls.polls.find((p) => p.id === id)
+  );
+
+  const [formData, setFormData] = useState<Partial<Poll>>({
+    title: "",
+    description: "",
+    expires_at: "",
+  });
 
   useEffect(() => {
-    setLoading(true);
-    dispatch(fetchActivePolls())
-      .unwrap()
-      .catch(() => setError("Failed to load polls. Please try again."))
-      .finally(() => setLoading(false));
+    dispatch(fetchActivePolls());
   }, [dispatch]);
 
-  const handleUpdate = async () => {
-    if (editPoll) {
-      setLoading(true);
-      setError(null);
+  useEffect(() => {
+    if (id) {
+      dispatch(fetchPollById(id));
+    }
+  }, [dispatch, id]);
 
+  useEffect(() => {
+    if (poll) {
+      setFormData({
+        title: poll.title,
+        description: poll.description,
+        expires_at: formatDateForInput(poll.expires_at || ""),
+      });
+    }
+  }, [poll]);
+
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
+
+  const handleUpdatePoll = async () => {
+    if (id) {
+      setLoading(true);
+      setMessage(null);
       try {
-        await dispatch(
-          updatePoll({
-            id: editPoll.id || "",
-            pollData: {
-              title: editPoll.title,
-              description: editPoll.description,
-              expires_at: editPoll.expires_at,
-              options: editPoll?.options?.map((opt: PollOption) => ({
-                id: opt.id,
-                text: opt.text,
-              })),
-            },
-          })
-        ).unwrap();
-        setEditPoll(null);
-      } catch {
-        setError("Failed to update poll. Please try again.");
+        await dispatch(updatePoll({ id, pollData: formData })).unwrap();
+        setMessage({ type: "success", text: "Poll updated successfully!" });
+      } catch (error) {
+        setMessage({ type: "error", text: "Failed to update poll." });
       } finally {
         setLoading(false);
       }
     }
   };
 
-  const handleOptionChange = (index: number, value: string) => {
-    if (editPoll) {
-      const updatedOptions = [...(editPoll?.options || [])];
-      updatedOptions[index] = { ...updatedOptions[index], text: value };
-      setEditPoll({ ...editPoll, options: updatedOptions });
+  const handleDelete = async (pollId: string) => {
+    setDeletingPollId(pollId);
+    try {
+      await dispatch(deletePoll(pollId)).unwrap();
+    } catch (error) {
+      console.error("Failed to delete poll:", error);
+    } finally {
+      setDeletingPollId(null);
     }
   };
 
-  const handleAddOption = () => {
-    if (editPoll) {
-      const newOption: PollOption = { id: "", text: "" };
-      setEditPoll({
-        ...editPoll,
-        options: [...(editPoll.options ?? []), newOption],
-      });
-    }
-  };
-
-  const formatDateForInput = (isoString: string) => {
+  const formatDateForInput = (isoString: string | undefined) => {
+    if (!isoString) return "";
     const date = new Date(isoString);
     return date.toISOString().slice(0, 16);
   };
 
+  const handleAddOption = () => {
+    if (optionText.trim()) {
+      setNewOptions([...newOptions, optionText.trim()]);
+      setOptionText("");
+    }
+  };
+
+  const handleSubmitOptions = async () => {
+    if (id && newOptions.length > 0) {
+      setLoading(true);
+      setMessage(null);
+      try {
+        await dispatch(
+          addPollOptions({ id, optionsData: newOptions })
+        ).unwrap();
+        setMessage({ type: "success", text: "Options added successfully!" });
+        setNewOptions([]);
+      } catch (error) {
+        setMessage({ type: "error", text: "Failed to add options." });
+      } finally {
+        setLoading(false);
+      }
+    }
+  };
+
   return (
-    <div className="max-w-3xl mx-auto p-6 bg-white shadow-lg rounded-lg">
-      <h1 className="text-2xl font-bold mb-4">Manage Polls</h1>
+    <div className="max-w-2xl mx-auto p-6 bg-white shadow-lg rounded-lg">
+      <h2 className="text-2xl font-bold mb-4">Manage Polls</h2>
 
-      {loading && <Loader />}
-      {error && (
-        <div className="bg-red-100 text-red-800 p-2 rounded mb-4">{error}</div>
+      {/* Display success/error messages */}
+      {message && (
+        <div
+          className={`p-3 mb-4 text-white text-center rounded-lg ${
+            message.type === "success" ? "bg-green-500" : "bg-red-500"
+          }`}
+        >
+          {message.text}
+        </div>
       )}
 
-      {!loading && activePolls.length === 0 && (
-        <p className="text-gray-500 text-center">No polls available.</p>
-      )}
-
-      {!loading && activePolls.length > 0 && (
-        <ul className="space-y-4">
-          {activePolls.map((poll) => (
-            <li key={poll.id} className="p-4 rounded-lg shadow-md">
-              {editPoll?.id === poll.id ? (
-                <div>
-                  {/* Editable Title & Description */}
-                  <label className="block font-semibold">Title</label>
-                  <input
-                    type="text"
-                    value={editPoll?.title}
-                    onChange={(e) =>
-                      setEditPoll({ ...editPoll, title: e.target.value })
-                    }
-                    className="w-full p-2 mb-2 border rounded"
-                  />
-
-                  <label className="block font-semibold">Description</label>
-                  <textarea
-                    value={editPoll?.description || ""}
-                    onChange={(e) =>
-                      setEditPoll({ ...editPoll, description: e.target.value })
-                    }
-                    className="w-full p-2 border rounded"
-                  />
-
-                  {/* Editable Expiration Date */}
-                  <label className="block mt-3 font-semibold">
-                    Expires At:
-                  </label>
-                  <input
-                    type="datetime-local"
-                    value={
-                      editPoll?.expires_at
-                        ? formatDateForInput(editPoll.expires_at)
-                        : ""
-                    }
-                    onChange={(e) =>
-                      setEditPoll({ ...editPoll, expires_at: e.target.value })
-                    }
-                    className="w-full p-2 mb-2 border rounded"
-                  />
-
-                  {/* Editable Options */}
-                  <h3 className="mt-3 font-semibold">Options:</h3>
-                  {(editPoll?.options || []).map((option, index) => (
-                    <div
-                      key={option.id}
-                      className="flex items-center gap-2 mb-2"
-                    >
-                      <input
-                        type="text"
-                        value={option.text}
-                        onChange={(e) =>
-                          handleOptionChange(index, e.target.value)
-                        }
-                        className="w-full p-2 border rounded"
-                      />
-                      <button
-                        onClick={() =>
-                          setEditPoll({
-                            ...editPoll,
-                            options: (editPoll?.options ?? []).filter(
-                              (_, i) => i !== index
-                            ),
-                          })
-                        }
-                        className="bg-red-500 text-white px-2 py-1 rounded hover:bg-red-600"
-                      >
-                        <X size={16} />
-                      </button>
-                    </div>
-                  ))}
-
-                  {/* Add Option Button */}
-                  <button
-                    onClick={handleAddOption}
-                    className="mt-2 bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 flex items-center gap-2"
+      {/* Active Polls List */}
+      <div className="mb-6">
+        <h3 className="text-lg font-semibold mb-2">Active Polls</h3>
+        {activePolls.length > 0 ? (
+          <ul className="space-y-2">
+            {activePolls.map((poll) => (
+              <li
+                key={poll.id}
+                className="flex justify-between items-center bg-gray-100 p-3 rounded-lg"
+              >
+                <span className="text-gray-800">{poll.title}</span>
+                <div className="flex gap-3">
+                  <Button
+                    onClick={() => router.replace(`/manage-poll?id=${poll.id}`)}
+                    className="bg-blue-500 hover:bg-blue-600 px-4 py-2 text-white text-sm"
                   >
-                    <Plus size={16} />
-                    Add Option
-                  </button>
+                    Edit
+                  </Button>
 
-                  {/* Action Buttons */}
-                  <div className="flex justify-between mt-4">
-                    <ConfirmButton
-                      text="Save"
-                      onConfirm={handleUpdate}
-                      className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
-                      disabled={loading}
-                    />
-                    <button
-                      onClick={() => setEditPoll(null)}
-                      className="bg-gray-400 text-white px-4 py-2 rounded hover:bg-gray-500"
-                    >
-                      Cancel
-                    </button>
-                  </div>
+                  <ConfirmButton
+                    text={deletingPollId === poll.id ? "Deleting..." : "Delete"}
+                    onConfirm={() => handleDelete(String(poll.id))}
+                    className={`bg-red-500 text-white px-4 py-1.5 rounded text-sm ${
+                      deletingPollId === poll.id
+                        ? "opacity-50 cursor-not-allowed"
+                        : "hover:bg-red-600"
+                    }`}
+                    disabled={deletingPollId === poll.id}
+                  />
                 </div>
-              ) : (
-                <div>
-                  <h2 className="text-xl font-semibold">{poll.title}</h2>
-                  <p>{poll.description}</p>
-                  <p className="mt-1">
-                    <strong>Expires at:</strong>{" "}
-                    {poll.expires_at
-                      ? new Date(poll.expires_at).toLocaleString()
-                      : "No expiration date"}
-                  </p>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p className="text-gray-500">No active polls available.</p>
+        )}
+      </div>
 
-                  <h3 className="mt-2 font-semibold">Options:</h3>
-                  <ul className="list-disc pl-6">
-                    {(poll.options || []).map((option) => (
-                      <li key={option.id}>{option.text}</li>
-                    ))}
-                  </ul>
+      {/* Manage Selected Poll */}
+      {id && poll && (
+        <>
+          <div className="border-t pt-4">
+            <h3 className="text-lg font-semibold mb-2">Edit Poll</h3>
 
-                  {/* Edit & Delete Buttons */}
-                  <div className="flex justify-end space-x-2 mt-2">
-                    <ConfirmButton
-                      text="Edit"
-                      onConfirm={() => setEditPoll(poll)}
-                      className="bg-yellow-500 text-white px-4 py-2 rounded hover:bg-yellow-600 flex items-center gap-2"
-                    />
-                    <ConfirmButton
-                      text="Delete"
-                      onConfirm={() => dispatch(deletePoll(String(poll.id)))}
-                      className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600"
-                    />
-                  </div>
-                </div>
-              )}
-            </li>
-          ))}
-        </ul>
+            <div className="mb-4">
+              <label
+                htmlFor="title"
+                className="block font-medium text-gray-700"
+              >
+                Title
+              </label>
+              <input
+                id="title"
+                type="text"
+                name="title"
+                value={formData.title}
+                onChange={handleChange}
+                className="w-full p-2 border rounded-lg"
+              />
+            </div>
+
+            <div className="mb-4">
+              <label
+                htmlFor="expires_at"
+                className="block font-medium text-gray-700"
+              >
+                Expires At
+              </label>
+              <input
+                id="expires_at"
+                type="datetime-local"
+                name="expires_at"
+                value={formData.expires_at}
+                onChange={handleChange}
+                className="w-full p-2 border rounded-lg"
+              />
+            </div>
+
+            <Button
+              onClick={handleUpdatePoll}
+              disabled={loading}
+              className="w-full bg-green-500 hover:bg-green-600 px-6 py-3 mb-4"
+            >
+              {loading ? "Updating..." : "Update Poll"}
+            </Button>
+
+            <Button
+              onClick={() => router.push("/dashboard")}
+              className="w-full bg-gray-500 hover:bg-gray-600 px-6 py-3 mb-4"
+            >
+              Back to Dashboard
+            </Button>
+
+            {/* Add Options Section */}
+            <div className="border-t pt-4">
+              <h3 className="text-lg font-semibold mb-2">Add Options</h3>
+
+              <div className="flex items-center gap-2 mb-2">
+                <input
+                  type="text"
+                  value={optionText}
+                  onChange={(e) => setOptionText(e.target.value)}
+                  className="w-full p-2 border rounded-lg"
+                />
+                <Button
+                  onClick={handleAddOption}
+                  className="bg-blue-500 hover:bg-blue-600 px-4 py-2"
+                >
+                  Add
+                </Button>
+              </div>
+
+              <Button
+                onClick={handleSubmitOptions}
+                disabled={newOptions.length === 0 || loading}
+                className="w-full bg-purple-500 hover:bg-purple-600 px-6 py-3"
+              >
+                {loading ? "Submitting..." : "Submit Options"}
+              </Button>
+            </div>
+          </div>
+        </>
       )}
     </div>
   );
 };
 
-export default ManagePolls;
+export default ManagePoll;

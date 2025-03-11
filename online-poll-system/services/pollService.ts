@@ -74,7 +74,7 @@ export const updatePoll = async (
 ): Promise<Poll> => {
   try {
     const response = await api.put(`/polls/${id}/`, pollData);
-    return response.data.return;
+    return response.data;
   } catch (error: unknown) {
     if (axios.isAxiosError(error)) {
       throw new Error(
@@ -105,7 +105,9 @@ export const addPollOptions = async (
   optionsData: string[]
 ): Promise<string[]> => {
   try {
-    const response = await api.post(`/polls/${id}/add_options/`, optionsData);
+    const response = await api.post(`/polls/${id}/add_options/`, {
+      options: optionsData,
+    });
     return response.data;
   } catch (error: unknown) {
     if (axios.isAxiosError(error)) {

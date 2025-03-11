@@ -194,11 +194,27 @@ const pollSlice = createSlice({
       .addCase(createPoll.fulfilled, (state, action) => {
         state.polls.push(action.payload);
       })
+      .addCase(deletePoll.pending, (state) => {
+        state.loading = true;
+      })
+      .addCase(deletePoll.fulfilled, (state, action) => {
+        state.loading = false;
+        state.activePolls = state.activePolls.filter((poll) => poll.id !== action.payload);
+      })
+      .addCase(deletePoll.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string;
+      })
       .addCase(updatePoll.fulfilled, (state, action) => {
         const index = state.polls.findIndex(
           (poll) => poll.id === action.payload.id
         );
         if (index !== -1) state.polls[index] = action.payload;
+      })
+      .addCase(addPollOptions.fulfilled, (state, action) => {
+        const { id, optionsData } = action.meta.arg;
+        const poll = state.polls.find((poll) => poll.id === id);
+        if (poll) poll.options = [...(poll.options ?? []), ...optionsData.map((text) => ({ id: "", text }))];
       })
       .addCase(voteInPoll.fulfilled, () => {
         // No need to manually update state
