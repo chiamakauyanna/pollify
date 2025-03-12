@@ -4,6 +4,8 @@ import { AppDispatch } from "@/redux/store";
 import { createPoll } from "@/redux/slices/pollSlice";
 import Button from "@/components/common/Button";
 import { Poll } from "@/Interfaces/interface";
+import { ArrowLeft } from "lucide-react";
+import router from "next/router";
 
 const CreatePoll: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
@@ -57,7 +59,15 @@ const CreatePoll: React.FC = () => {
 
   return (
     <div className="max-w-lg mx-auto bg-white shadow-lg rounded-lg p-6">
-      <h1 className="text-2xl font-bold mb-4">Create a New Poll</h1>
+      <div className="flex items-center gap-12 mb-4">
+        <button
+          onClick={() => router.back()}
+          className="text-gray-600 hover:text-gray-900"
+        >
+          <ArrowLeft className="w-6 h-6" />
+        </button>
+        <h2 className="text-2xl font-bold">Create a New Poll</h2>
+      </div>
 
       {error && (
         <div className="bg-red-100 text-red-800 p-2 rounded mb-4">{error}</div>

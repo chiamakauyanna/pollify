@@ -3,8 +3,8 @@ import { useSelector, useDispatch } from "react-redux";
 import { fetchActivePolls, selectActivePolls } from "@/redux/slices/pollSlice";
 import Link from "next/link";
 import { AppDispatch, RootState } from "@/redux/store";
-import { CheckSquare, BarChart2 } from "lucide-react"; // Import vote & results icons
-import Loader from "@/components/common/Loader"; // Import Loader component
+import { CheckSquare, BarChart2 } from "lucide-react";
+import Loader from "@/components/common/Loader";
 
 const Vote = () => {
   const dispatch = useDispatch<AppDispatch>();
