@@ -8,7 +8,7 @@ export interface ButtonProps {
   className?: string;
   type?: "button" | "submit";
   icon?: React.ReactNode;
-  disabled?: boolean; 
+  disabled?: boolean;
   children?: React.ReactNode;
 }
 
@@ -70,4 +70,20 @@ export interface VoteResponse {
   id: string;
   option: string;
   voted_at: string;
+}
+
+export interface SelectedPollProps {
+  formData: Partial<Poll>;
+  message: { type: "error" | "success"; text: string } | null;
+  handleChange: (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => void;
+  handleUpdatePoll: () => void;
+  isUpdating: boolean;
+  optionText: string;
+  setOptionText: (text: string) => void;
+  handleAddOption: () => void;
+  newOptions: string[];
+  handleSubmitOptions: () => void;
+  isSubmittingOptions: boolean;
 }

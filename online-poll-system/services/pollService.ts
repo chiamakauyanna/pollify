@@ -103,12 +103,13 @@ export const deletePoll = async (id: string): Promise<void> => {
 export const addPollOptions = async (
   id: string,
   optionsData: string[]
-): Promise<string[]> => {
+): Promise<{ id: string; options: { id: string; text: string; created_at: string }[] }> => {
   try {
     const response = await api.post(`/polls/${id}/add_options/`, {
-      options: optionsData,
+      options: optionsData.map((text) => ({ text })),
     });
-    return response.data;
+
+    return { id, options: response.data }; // API returns an array of options
   } catch (error: unknown) {
     if (axios.isAxiosError(error)) {
       throw new Error(

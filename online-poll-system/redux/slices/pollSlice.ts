@@ -17,7 +17,7 @@ import {
 import { Poll, PollResults, VoteResponse } from "@/Interfaces/interface";
 import { RootState } from "../store";
 
-// **Fetch Active Polls**
+// Fetch Active Polls
 export const fetchActivePolls = createAsyncThunk<
   Poll[],
   void,
@@ -32,7 +32,7 @@ export const fetchActivePolls = createAsyncThunk<
   }
 });
 
-// **Fetch All Polls**
+// Fetch All Polls
 export const fetchPolls = createAsyncThunk<
   Poll[],
   void,
@@ -47,7 +47,7 @@ export const fetchPolls = createAsyncThunk<
   }
 });
 
-// **Fetch Poll By ID**
+// Fetch Poll By ID
 export const fetchPollById = createAsyncThunk<
   Poll,
   string,
@@ -62,7 +62,7 @@ export const fetchPollById = createAsyncThunk<
   }
 });
 
-// **Create a Poll**
+// Create a Poll
 export const createPoll = createAsyncThunk<
   Poll,
   Omit<Poll, "id">,
@@ -77,7 +77,7 @@ export const createPoll = createAsyncThunk<
   }
 });
 
-// **Update a Poll**
+// Update a Poll
 export const updatePoll = createAsyncThunk<
   Poll,
   { id: string; pollData: Partial<Poll> },
@@ -92,7 +92,7 @@ export const updatePoll = createAsyncThunk<
   }
 });
 
-// **Delete a Poll**
+// Delete a Poll
 export const deletePoll = createAsyncThunk<
   string,
   string,
@@ -108,22 +108,27 @@ export const deletePoll = createAsyncThunk<
   }
 });
 
-// **Add Options to a Poll**
+// Add Options to a Poll
 export const addPollOptions = createAsyncThunk<
-  string[],
-  { id: string; optionsData: string[] },
+  { id: string; options: { id: string; text: string; created_at: string }[] }, 
+  { id: string; optionsData: string[] }, 
   { rejectValue: string }
->("polls/addPollOptions", async ({ id, optionsData }, { rejectWithValue }) => {
-  try {
-    return await addPollOptionsService(id, optionsData);
-  } catch (error) {
-    return rejectWithValue(
-      error instanceof Error ? error.message : "Error adding poll options"
-    );
+>(
+  "polls/addPollOptions",
+  async ({ id, optionsData }, { rejectWithValue }) => {
+    try {
+      const { id: pollId, options } = await addPollOptionsService(id, optionsData);
+      return { id: pollId, options }; 
+    } catch (error) {
+      return rejectWithValue(
+        error instanceof Error ? error.message : "Error adding poll options"
+      );
+    }
   }
-});
+);
 
-// **Fetch Poll Results**
+
+// Fetch Poll Results
 export const fetchPollResults = createAsyncThunk<
   PollResults,
   string,
@@ -138,24 +143,26 @@ export const fetchPollResults = createAsyncThunk<
   }
 });
 
-// **Vote in a Poll**
+// Vote in a Poll
 export const voteInPoll = createAsyncThunk<
   VoteResponse,
   { optionId: string; voterId: string; poll: unknown },
   { rejectValue: string }
->("polls/voteInPoll", async ({ optionId, voterId, poll }, { rejectWithValue }) => {
-  try {
-    const response = await voteInPollService(optionId, voterId, poll);
-    return response;
-  } catch (error) {
-    return rejectWithValue(
-      error instanceof Error ? error.message : "Vote failed"
-    );
+>(
+  "polls/voteInPoll",
+  async ({ optionId, voterId, poll }, { rejectWithValue }) => {
+    try {
+      const response = await voteInPollService(optionId, voterId, poll);
+      return response;
+    } catch (error) {
+      return rejectWithValue(
+        error instanceof Error ? error.message : "Vote failed"
+      );
+    }
   }
-});
+);
 
-
-// **Poll Slice**
+// Poll Slice
 const pollSlice = createSlice({
   name: "polls",
   initialState: {
@@ -199,7 +206,9 @@ const pollSlice = createSlice({
       })
       .addCase(deletePoll.fulfilled, (state, action) => {
         state.loading = false;
-        state.activePolls = state.activePolls.filter((poll) => poll.id !== action.payload);
+        state.activePolls = state.activePolls.filter(
+          (poll) => poll.id !== action.payload
+        );
       })
       .addCase(deletePoll.rejected, (state, action) => {
         state.loading = false;
@@ -212,9 +221,11 @@ const pollSlice = createSlice({
         if (index !== -1) state.polls[index] = action.payload;
       })
       .addCase(addPollOptions.fulfilled, (state, action) => {
-        const { id, optionsData } = action.meta.arg;
-        const poll = state.polls.find((poll) => poll.id === id);
-        if (poll) poll.options = [...(poll.options ?? []), ...optionsData.map((text) => ({ id: "", text }))];
+        const { id, options } = action.payload;
+        const poll = state.polls.find((p) => p.id === id);
+        if (poll) {
+          poll.options = [...(poll.options || []), ...options];
+        }
       })
       .addCase(voteInPoll.fulfilled, () => {
         // No need to manually update state

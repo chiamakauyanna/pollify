@@ -51,8 +51,3 @@ h6 {
   border-color: var(--color-hover);
   color: var(--color-hover);
 }
-
-/* List Items */
-li:hover {
-  color: var(--color-secondary);
-}
