@@ -16,7 +16,7 @@ const CreatePoll: React.FC = () => {
   const [options, setOptions] = useState<string[]>(["", ""]);
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<string | null>(null); 
+  const [success, setSuccess] = useState<string | null>(null);
 
   // Handle Poll Submission
   const handleSubmit = async (e: React.FormEvent) => {
@@ -43,7 +43,7 @@ const CreatePoll: React.FC = () => {
     setLoading(true);
     try {
       await dispatch(createPoll(formattedPollData)).unwrap();
-      setSuccess("Poll created successfully!"); 
+      setSuccess("Poll created successfully!");
       setTimeout(() => setSuccess(null), 3000);
       setTitle("");
       setDescription("");
