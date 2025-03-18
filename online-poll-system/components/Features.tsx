@@ -5,7 +5,7 @@ import accessible from "@/assets/images/accessible.svg";
 
 const Features = () => {
   return (
-    <div className="min-h-screen flex flex-col justify-center lg:mx-32 md:mx-20 mx-10 lg:my-20 md:my-20 my-64">
+    <div className="min-h-screen flex flex-col justify-center lg:mx-32 md:mx-20 mx-10 lg:my-20 md:my-20 mt-64 mb-20">
       <div>
         <h2 className="lg:text-2xl md:text-1xl text-xl text-center">
           Our Features

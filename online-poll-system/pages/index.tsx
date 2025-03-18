@@ -25,7 +25,7 @@ export default function Home() {
             </div>
             <div className="text-center md:text-left lg:text-left">
               <Link href="/dashboard">
-                <Button className="button-primary lg:text-lg md:text-sm text-xs py-3 px-4 mt-4">
+                <Button className="button-primary lg:text-sm md:text-sm text-xs py-3 px-4 mt-4">
                   Get Started
                 </Button>
               </Link>
