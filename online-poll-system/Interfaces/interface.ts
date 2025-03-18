@@ -87,3 +87,5 @@ export interface SelectedPollProps {
   handleSubmitOptions: () => void;
   isSubmittingOptions: boolean;
 }
+
+

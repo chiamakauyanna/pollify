@@ -13,7 +13,7 @@ const Sidebar: React.FC<SidebarProps> = () => {
   const router = useRouter();
 
   const menuItems = [
-    { name: "Dashboard", href: "/", icon: <MdDashboard /> },
+    { name: "Dashboard", href: "/dashboard", icon: <MdDashboard /> },
     { name: "Vote", href: "/vote", icon: <MdHowToVote /> },
   ];
 

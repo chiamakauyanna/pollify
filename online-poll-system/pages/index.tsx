@@ -1,82 +1,50 @@
-import { useEffect } from "react";
-import { useSelector, useDispatch } from "react-redux";
-import { fetchActivePolls, selectActivePolls } from "@/redux/slices/pollSlice";
-import { RootState, AppDispatch } from "@/redux/store";
 import Button from "@/components/common/Button";
+import Image from "next/image";
+import homeImg from "@/assets/images/voting-img.svg";
+import Steps from "@/components/Steps";
+import Features from "@/components/Features";
 import Link from "next/link";
-import PollSection from "@/components/common/PollSection";
-import DashboardCard from "@/components/common/DashboardCard";
-import { Plus, Settings } from "lucide-react";
-import Loader from "@/components/common/Loader";
+import Header from "@/components/layout/LandingHeader";
+import Footer from "@/components/layout/LandingFooter";
 
-export default function Dashboard() {
-  const dispatch = useDispatch<AppDispatch>();
-
-  const { activePolls, loading, error } = useSelector((state: RootState) => ({
-    activePolls: selectActivePolls(state) || [],
-    loading: state.polls.loading,
-    error: state.polls.error,
-  }));
-
-  useEffect(() => {
-    dispatch(fetchActivePolls());
-  }, [dispatch]);
-
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center h-screen">
-        <Loader />
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="flex items-center justify-center h-screen text-red-500">
-        <p>Error: {error}</p>
-      </div>
-    );
-  }
-
+export default function Home() {
   return (
-    <section className="container mx-auto p-6">
-      {/* Dashboard Header */}
-      <div className="mb-6">
-        <h1 className="text-3xl font-bold text-primary mb-2">
-          Welcome to Pollify
-        </h1>
-        <p>Manage and monitor active polls easily.</p>
-      </div>
-
-      {/* Dashboard Summary */}
-      <div className="max-w-lg">
-        <DashboardCard title="Active Polls" count={activePolls.length} />
-      </div>
-
-      <div className="flex gap-4 mt-6">
-        <Link href="/create-poll">
-          <Button
-            icon={<Plus size={20} />}
-            text=""
-            className="bg-primary text-background py-3.5 px-6 hover:bg-secondary"
-          >
-            Create Poll
-          </Button>
-        </Link>
-        <Link href="/manage-poll">
-          <Button
-            icon={<Settings size={20} />}
-            className="border border-primary hover:bg-secondary hover:text-background text-primary py-3 px-6"
-          >
-            Manage Polls
-          </Button>
-        </Link>
-      </div>
-
-      {/* Active Polls Section */}
-      <div className="mt-8">
-        <PollSection title="Active Polls" polls={activePolls} />
-      </div>
-    </section>
+    <>
+      <Header />
+      <section className="">
+        <div className="flex lg:gap-12 md:gap-10 gap-8 lg:px-12 md:px-10 px-8 justify-center h-screen items-center relative lg:flex-row md:flex-row flex-col-reverse">
+          <div className="lg:p-6 md:p-6 p-2 lg:mr-24 ">
+            <div className="max-w-md">
+              <h2 className="text-primary lg:text-3xl md:text-2xl text-xl mb-4 font-bold lg:text-left md:text-left text-center">
+                Revolutionizing Online Polling
+              </h2>
+              <p className="text-sm lg:text-left md:text-left text-center">
+                Fast, secure, and interactive polling at your fingertips. Have
+                your say and watch results update live!
+              </p>
+            </div>
+            <div className="text-center md:text-left lg:text-left">
+              <Link href="/dashboard">
+                <Button className="button-primary lg:text-lg md:text-sm text-xs py-3 px-4 mt-4">
+                  Get Started
+                </Button>
+              </Link>
+            </div>
+          </div>
+          <div className="lg:flex md:flex">
+            <Image
+              src={homeImg}
+              alt="animated picture of a lady voting"
+              className="w-[300px]"
+            />
+          </div>
+        </div>
+        <Steps />
+        <Features />
+      </section>
+      <Footer />
+    </>
   );
 }
+
+Home.noLayout = true;
