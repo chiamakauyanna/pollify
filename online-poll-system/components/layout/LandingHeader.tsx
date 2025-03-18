@@ -4,7 +4,7 @@ import Link from "next/link";
 
 const Header = () => {
   return (
-    <div className="flex justify-between items-center lg:px-14 md:px-12 px-8  py-4 fixed w-full bg-background z-10">
+    <div className="flex justify-between items-center lg:px-14 md:px-12 px-8  py-4 fixed w-full bg-background z-10 shadow-lg">
       <Logo />
       <div className="">
         <Link href="/create-poll">
