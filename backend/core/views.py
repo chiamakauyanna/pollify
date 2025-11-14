@@ -7,13 +7,14 @@ from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from django.utils import timezone
 from django.db import transaction
 from django.db.models import Count
+from drf_spectacular.utils import extend_schema, extend_schema_view, OpenApiParameter
 
 from .models import User, Poll, Choice, Vote
 from .serializers import RegisterSerializer, PollSerializer, ChoiceSerializer, VoteSerializer
 from .permissions import IsAdminRole, IsVoterRole, IsAdminOrReadOnly
 
-
 # ----------------- Registration -----------------
+@extend_schema(tags=['Authentication'], description="Register a new voter")
 class VoterRegisterView(generics.CreateAPIView):
     serializer_class = RegisterSerializer
     permission_classes = [AllowAny]
@@ -27,7 +28,7 @@ class VoterRegisterView(generics.CreateAPIView):
         headers = self.get_success_headers(serializer.data)
         return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
 
-
+@extend_schema(tags=['Authentication'], description="Register a new admin")
 class AdminRegisterView(generics.CreateAPIView):
     serializer_class = RegisterSerializer
     permission_classes = [AllowAny]
@@ -41,33 +42,38 @@ class AdminRegisterView(generics.CreateAPIView):
         headers = self.get_success_headers(serializer.data)
         return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
 
-
 # ----------------- Login -----------------
-class AdminTokenObtainPairSerializer(TokenObtainPairSerializer):
-    def validate(self, attrs):
-        data = super().validate(attrs)
-        if self.user.role != "admin":
-            raise serializers.ValidationError("User is not an admin.")
-        return data
-
-
-class VoterTokenObtainPairSerializer(TokenObtainPairSerializer):
-    def validate(self, attrs):
-        data = super().validate(attrs)
-        if self.user.role != "voter":
-            raise serializers.ValidationError("User is not a voter.")
-        return data
-
-
+@extend_schema(tags=['Authentication'], description="Admin login to obtain JWT token")
 class AdminLoginView(TokenObtainPairView):
-    serializer_class = AdminTokenObtainPairSerializer
+    serializer_class = type(
+        'AdminTokenObtainPairSerializer', 
+        (TokenObtainPairSerializer,),
+        {
+            'validate': lambda self, attrs: super(TokenObtainPairSerializer, self).validate(attrs) 
+            if self.user.role == "admin" else serializers.ValidationError("User is not an admin.")
+        }
+    )
 
-
+@extend_schema(tags=['Authentication'], description="Voter login to obtain JWT token")
 class VoterLoginView(TokenObtainPairView):
-    serializer_class = VoterTokenObtainPairSerializer
-
+    serializer_class = type(
+        'VoterTokenObtainPairSerializer', 
+        (TokenObtainPairSerializer,),
+        {
+            'validate': lambda self, attrs: super(TokenObtainPairSerializer, self).validate(attrs) 
+            if self.user.role == "voter" else serializers.ValidationError("User is not a voter.")
+        }
+    )
 
 # ----------------- Polls -----------------
+@extend_schema_view(
+    list=extend_schema(tags=['Polls'], description="List polls available to the user"),
+    retrieve=extend_schema(tags=['Polls'], description="Retrieve details of a poll"),
+    create=extend_schema(tags=['Polls'], description="Create a new poll (Admin only)"),
+    update=extend_schema(tags=['Polls'], description="Update a poll (Admin only)"),
+    partial_update=extend_schema(tags=['Polls'], description="Partially update a poll (Admin only)"),
+    destroy=extend_schema(tags=['Polls'], description="Delete a poll (Admin only)"),
+)
 class PollViewSet(viewsets.ModelViewSet):
     serializer_class = PollSerializer
     permission_classes = [IsAdminOrReadOnly]
@@ -82,7 +88,10 @@ class PollViewSet(viewsets.ModelViewSet):
             qs = qs.filter(is_active=True, created_by=user.assigned_admin)
         return qs
 
-
+@extend_schema_view(
+    list=extend_schema(tags=['Choices'], description="List choices with vote counts"),
+    create=extend_schema(tags=['Choices'], description="Create a choice for a poll (Admin only)"),
+)
 class ChoiceViewSet(viewsets.ModelViewSet):
     serializer_class = ChoiceSerializer
     permission_classes = [IsAdminOrReadOnly]
@@ -90,8 +99,8 @@ class ChoiceViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         return Choice.objects.annotate(votes_count=Count("votes"))
 
-
 # ----------------- Voting -----------------
+@extend_schema(tags=['Voting'], description="Cast a vote for a poll")
 class VoteCreateView(generics.CreateAPIView):
     serializer_class = VoteSerializer
     permission_classes = [IsVoterRole, IsAuthenticated]
@@ -108,7 +117,6 @@ class VoteCreateView(generics.CreateAPIView):
         if not poll.is_votable:
             return Response({"detail": "Poll is not currently votable."}, status=status.HTTP_400_BAD_REQUEST)
 
-        # Prevent double voting
         vote, created = Vote.objects.get_or_create(
             poll=poll,
             voter=voter,
@@ -120,8 +128,8 @@ class VoteCreateView(generics.CreateAPIView):
         out = VoteSerializer(vote)
         return Response(out.data, status=status.HTTP_201_CREATED)
 
-
 # ----------------- Poll Stats -----------------
+@extend_schema(tags=['Poll Stats'], description="Retrieve live statistics for a poll")
 class PollStatsView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -131,7 +139,6 @@ class PollStatsView(APIView):
         except Poll.DoesNotExist:
             return Response({"detail": "Poll not found."}, status=404)
 
-        # Voter access restriction
         if request.user.role == "voter" and poll.created_by != request.user.assigned_admin:
             return Response({"detail": "You cannot access this poll."}, status=403)
 
