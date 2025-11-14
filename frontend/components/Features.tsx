@@ -1,7 +1,7 @@
 import Image from "next/image";
-import secure from "@/assets/images/secure.svg";
-import results from "@/assets/images/results.svg";
-import accessible from "@/assets/images/accessible.svg";
+import secure from "@/assets/secure.svg";
+import results from "@/assets/results.svg";
+import accessible from "@/assets/accessible.svg";
 
 const Features = () => {
   return (

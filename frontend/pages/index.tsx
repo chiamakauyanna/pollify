@@ -1,6 +1,6 @@
 import Button from "@/components/common/Button";
 import Image from "next/image";
-import homeImg from "@/assets/images/voting-img.svg";
+import homeImg from "@/assets/voting-img.svg"
 import Steps from "@/components/Steps";
 import Features from "@/components/Features";
 import Link from "next/link";

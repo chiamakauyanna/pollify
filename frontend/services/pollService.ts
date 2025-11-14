@@ -1,7 +1,7 @@
 import { Poll, PollResults, VoteResponse } from "@/Interfaces/interface";
 import axios from "axios";
 
-const API_BASE_URL = "https://pollify.up.railway.app/api";
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL
 
 // Axios instance with default headers
 const api = axios.create({
