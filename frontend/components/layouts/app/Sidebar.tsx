@@ -2,7 +2,7 @@ import Link from "next/link";
 import { useRouter } from "next/router";
 import { useDispatch, useSelector } from "react-redux";
 import { selectSidebarState, toggleSidebar } from "@/redux/slices/sidebarSlice";
-import Logo from "../common/Logo";
+import Logo from "../../common/Logo";
 import { IoMdClose } from "react-icons/io";
 import { MdDashboard, MdHowToVote } from "react-icons/md"; 
 import { SidebarProps } from "@/Interfaces/interface";

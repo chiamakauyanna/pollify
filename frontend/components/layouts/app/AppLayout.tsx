@@ -1,9 +1,9 @@
 import { useState } from "react";
+import { LayoutProps } from "@/Interfaces/interface";
 import Header from "./Header";
 import Sidebar from "./Sidebar";
-import { LayoutProps } from "@/Interfaces/interface";
 
-export default function Layout({ children }: LayoutProps) {
+export default function AppLayout({ children }: LayoutProps) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
 
   return (

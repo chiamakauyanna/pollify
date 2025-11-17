@@ -1,159 +1,120 @@
-import { Poll, PollResults, VoteResponse } from "@/Interfaces/interface";
-import axios from "axios";
+import api from "./api";
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL
+// -------------------- TYPES --------------------
+export interface User {
+  id: string;
+  username: string;
+}
 
-// Axios instance with default headers
-const api = axios.create({
-  baseURL: API_BASE_URL,
-  headers: {
-    "Content-Type": "application/json",
+export interface Choice {
+  id: string;
+  text: string;
+  votes_count?: number;
+}
+
+export interface Poll {
+  id: string;
+  title: string;
+  description?: string;
+  created_by: User;
+  organization?: { id: string; name: string };
+  choices: Choice[];
+  start_at?: string;
+  end_at?: string;
+  is_active: boolean;
+  created_at: string;
+}
+
+export interface PollPayload {
+  title: string;
+  description?: string;
+  start_at?: string;
+  end_at?: string;
+  is_active?: boolean;
+}
+
+export interface ChoicePayload {
+  poll: string; 
+  text: string;
+}
+
+export interface VotePayload {
+  poll: string;
+  choice: string;
+}
+
+export interface PollStats {
+  poll: Poll;
+  total_votes: number;
+  choices: Choice[];
+}
+
+export interface Vote {
+  id: string;
+  poll: string;
+  choice: string;
+  voter: string;
+  created_at: string;
+}
+
+// -------------------- SERVICE --------------------
+const pollService = {
+  // POLLS
+  getPolls: async (): Promise<Poll[]> => {
+    const res = await api.get<Poll[]>("/polls/");
+    return res.data;
   },
-});
 
-// Function to fetch active polls
-export const fetchActivePolls = async (): Promise<Poll[]> => {
-  try {
-    const response = await api.get("/active-polls/");
-    return response.data.results;
-  } catch (error: unknown) {
-    if (axios.isAxiosError(error)) {
-      throw new Error(
-        error.response?.data?.message || "Failed to fetch active polls"
-      );
-    }
-    throw new Error("An unexpected error occurred");
-  }
-};
+  getPoll: async (id: string): Promise<Poll> => {
+    const res = await api.get<Poll>(`/polls/${id}/`);
+    return res.data;
+  },
 
-// Function to fetch all polls
-export const fetchPolls = async (): Promise<Poll[]> => {
-  try {
-    const response = await api.get("/polls/");
-    return response.data;
-  } catch (error: unknown) {
-    if (axios.isAxiosError(error)) {
-      throw new Error(error.response?.data?.message || "Failed to fetch polls");
-    }
-    throw new Error("An unexpected error occurred");
-  }
-};
+  createPoll: async (data: PollPayload): Promise<Poll> => {
+    const res = await api.post<Poll>("/polls/", data);
+    return res.data;
+  },
 
-// Function to fetch a single poll by ID
-export const fetchPollById = async (id: string): Promise<Poll> => {
-  try {
-    const response = await api.get(`/polls/${id}/`);
-    return response.data;
-  } catch (error: unknown) {
-    if (axios.isAxiosError(error)) {
-      throw new Error(
-        error.response?.data?.message || `Failed to fetch poll with ID ${id}`
-      );
-    }
-    throw new Error("An unexpected error occurred");
-  }
-};
+  updatePoll: async (id: string, data: Partial<PollPayload>): Promise<Poll> => {
+    const res = await api.patch<Poll>(`/polls/${id}/`, data);
+    return res.data;
+  },
 
-// Function to create a new poll
-export const createPoll = async (pollData: Omit<Poll, "id">): Promise<Poll> => {
-  try {
-    const response = await api.post("/polls/", pollData);
-    return response.data;
-  } catch (error: unknown) {
-    if (axios.isAxiosError(error)) {
-      throw new Error(error.response?.data?.message || "Failed to create poll");
-    }
-    throw new Error("An unexpected error occurred");
-  }
-};
-
-// Function to update a poll
-export const updatePoll = async (
-  id: string,
-  pollData: Partial<Poll>
-): Promise<Poll> => {
-  try {
-    const response = await api.put(`/polls/${id}/`, pollData);
-    return response.data;
-  } catch (error: unknown) {
-    if (axios.isAxiosError(error)) {
-      throw new Error(
-        error.response?.data?.message || `Failed to update poll with ID ${id}`
-      );
-    }
-    throw new Error("An unexpected error occurred");
-  }
-};
-
-// Function to delete a poll
-export const deletePoll = async (id: string): Promise<void> => {
-  try {
+  deletePoll: async (id: string): Promise<void> => {
     await api.delete(`/polls/${id}/`);
-  } catch (error: unknown) {
-    if (axios.isAxiosError(error)) {
-      throw new Error(
-        error.response?.data?.message || `Failed to delete poll with ID ${id}`
-      );
-    }
-    throw new Error("An unexpected error occurred");
-  }
+  },
+
+  // CHOICES
+  getChoicesByPoll: async (pollId: string): Promise<Choice[]> => {
+    const res = await api.get<Choice[]>(`/choices/?poll=${pollId}`);
+    return res.data;
+  },
+
+  createChoice: async (data: ChoicePayload): Promise<Choice> => {
+    const res = await api.post<Choice>("/choices/", data);
+    return res.data;
+  },
+
+  updateChoice: async (id: string, data: Partial<ChoicePayload>): Promise<Choice> => {
+    const res = await api.patch<Choice>(`/choices/${id}/`, data);
+    return res.data;
+  },
+
+  deleteChoice: async (id: string): Promise<void> => {
+    await api.delete(`/choices/${id}/`);
+  },
+
+  // VOTING
+  castVote: async (data: VotePayload): Promise<Vote> => {
+    const res = await api.post<Vote>("/vote/", data);
+    return res.data;
+  },
+
+  // POLL STATS
+  getPollStats: async (id: string): Promise<PollStats> => {
+    const res = await api.get<PollStats>(`/polls/${id}/stats/`);
+    return res.data;
+  },
 };
 
-// Function to add options to an existing poll
-export const addPollOptions = async (
-  id: string,
-  optionsData: string[]
-): Promise<{ id: string; options: { id: string; text: string; created_at: string }[] }> => {
-  try {
-    const response = await api.post(`/polls/${id}/add_options/`, {
-      options: optionsData.map((text) => ({ text })),
-    });
-
-    return { id, options: response.data }; // API returns an array of options
-  } catch (error: unknown) {
-    if (axios.isAxiosError(error)) {
-      throw new Error(
-        error.response?.data?.message ||
-          `Failed to add options to poll ID ${id}`
-      );
-    }
-    throw new Error("An unexpected error occurred");
-  }
-};
-
-// Function to fetch poll results
-export const fetchPollResults = async (id: string): Promise<PollResults> => {
-  try {
-    const response = await api.get(`/polls/${id}/results/`);
-    return response.data;
-  } catch (error: unknown) {
-    if (axios.isAxiosError(error)) {
-      throw new Error(
-        error.response?.data?.message ||
-          `Failed to fetch results for poll ID ${id}`
-      );
-    }
-    throw new Error("An unexpected error occurred");
-  }
-};
-
-// Function to vote in a poll
-export const voteInPoll = async (
-  optionId: string,
-  voterId: string,
-  poll: unknown
-): Promise<VoteResponse> => {
-  try {
-    const response = await api.post(`/votes/`, {
-      option: optionId,
-      vote: voterId,
-      poll: poll,
-    });
-    return response.data;
-  } catch (error: unknown) {
-    if (axios.isAxiosError(error)) {
-      throw new Error(error.response?.data?.message || "Voting failed");
-    }
-    throw new Error("An unexpected error occurred");
-  }
-};
+export default pollService;

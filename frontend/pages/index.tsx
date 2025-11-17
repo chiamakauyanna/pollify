@@ -1,18 +1,18 @@
 import Button from "@/components/common/Button";
 import Image from "next/image";
 import homeImg from "@/assets/voting-img.svg"
-import Steps from "@/components/Steps";
-import Features from "@/components/Features";
+import Steps from "@/components/landingSection/Steps";
+import Features from "@/components/landingSection/Features";
 import Link from "next/link";
-import Header from "@/components/layout/LandingHeader";
-import Footer from "@/components/layout/LandingFooter";
+import Header from "@/components/layouts/landing/Header";
+import Footer from "@/components/layouts/landing/Footer";
 
 export default function Home() {
   return (
     <>
       <Header />
       <section className="">
-        <div className="flex lg:gap-12 md:gap-10 gap-8 lg:px-12 md:px-10 px-8 justify-center h-screen items-center relative lg:flex-row md:flex-row flex-col-reverse">
+        <div className="flex lg:gap-12 md:gap-10 gap-8 lg:px-12 md:px-10 px-8 justify-center h-screen items-center relative lg:flex-row md:flex-row flex-col">
           <div className="lg:p-6 md:p-6 p-2 lg:mr-24 ">
             <div className="max-w-md">
               <h2 className="text-primary lg:text-3xl md:text-2xl text-xl mb-4 font-bold lg:text-left md:text-left text-center">
@@ -31,11 +31,11 @@ export default function Home() {
               </Link>
             </div>
           </div>
-          <div className="lg:flex md:flex">
+          <div className="lg:flex md:flex shadow-sm p-2">
             <Image
               src={homeImg}
               alt="animated picture of a lady voting"
-              className="w-[300px]"
+              className="w-[200px] md:w-[300px]"
             />
           </div>
         </div>
