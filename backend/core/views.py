@@ -8,32 +8,18 @@ from django.db.models import Count
 from drf_spectacular.utils import extend_schema, extend_schema_view
 
 from .models import Poll, Choice, Vote
-from .serializers import RegisterSerializer, PollSerializer, ChoiceSerializer, VoteSerializer, AdminTokenObtainPairSerializer, VoterTokenObtainPairSerializer
-from .permissions import IsVoterRole, IsAdminOrReadOnly
+from .serializers import RegisterSerializer, PollSerializer, ChoiceSerializer, VoteSerializer, OrgTokenObtainPairSerializer, OrgUserInviteSerializer
+from .permissions import IsVoterRole, IsAdminOrReadOnly, IsAdminRole
 
 
-class CustomTokenObtainPairView(TokenObtainPairView):
-    @extend_schema(
-        tags=["Authentication"],
-        summary="Get access & refresh tokens",
-        description="Authenticate a user and return JWT access + refresh tokens."
-    )
-    def post(self, request, *args, **kwargs):
-        return super().post(request, *args, **kwargs)
-
+# Auth
+class OrgTokenObtainPairView(TokenObtainPairView):
+    serializer_class = OrgTokenObtainPairSerializer
 
 class CustomTokenRefreshView(TokenRefreshView):
-    @extend_schema(
-        tags=["Authentication"],
-        summary="Refresh access token",
-        description="Submit a refresh token and receive a new access token."
-    )
-    def post(self, request, *args, **kwargs):
-        return super().post(request, *args, **kwargs)
+    pass
 
-
-# ----------------- Registration -----------------
-@extend_schema(tags=['Authentication'], description="Register a new voter")
+# Registration
 class VoterRegisterView(generics.CreateAPIView):
     serializer_class = RegisterSerializer
     permission_classes = [AllowAny]
@@ -44,11 +30,8 @@ class VoterRegisterView(generics.CreateAPIView):
         serializer = self.get_serializer(data=data)
         serializer.is_valid(raise_exception=True)
         self.perform_create(serializer)
-        headers = self.get_success_headers(serializer.data)
-        return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
 
-
-@extend_schema(tags=['Authentication'], description="Register a new admin")
 class AdminRegisterView(generics.CreateAPIView):
     serializer_class = RegisterSerializer
     permission_classes = [AllowAny]
@@ -59,59 +42,31 @@ class AdminRegisterView(generics.CreateAPIView):
         serializer = self.get_serializer(data=data)
         serializer.is_valid(raise_exception=True)
         self.perform_create(serializer)
-        headers = self.get_success_headers(serializer.data)
-        return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
 
-# ----------------- Login -----------------
-
-
-@extend_schema(tags=['Authentication'], description="Admin login to obtain JWT token")
-class AdminLoginView(TokenObtainPairView):
-    serializer_class = AdminTokenObtainPairSerializer
-
-
-@extend_schema(tags=['Authentication'], description="Voter login to obtain JWT token")
-class VoterLoginView(TokenObtainPairView):
-    serializer_class = VoterTokenObtainPairSerializer
-
-# ----------------- Polls -----------------
-
-
+# Polls
 @extend_schema_view(
-    list=extend_schema(
-        tags=['Polls'], description="List polls available to the user"),
-    retrieve=extend_schema(
-        tags=['Polls'], description="Retrieve details of a poll"),
-    create=extend_schema(
-        tags=['Polls'], description="Create a new poll (Admin only)"),
-    update=extend_schema(
-        tags=['Polls'], description="Update a poll (Admin only)"),
-    partial_update=extend_schema(
-        tags=['Polls'], description="Partially update a poll (Admin only)"),
-    destroy=extend_schema(
-        tags=['Polls'], description="Delete a poll (Admin only)"),
+    list=extend_schema(tags=['Polls'], description="List polls available to the user"),
+    retrieve=extend_schema(tags=['Polls'], description="Retrieve details of a poll"),
+    create=extend_schema(tags=['Polls'], description="Create a new poll (Admin only)"),
+    update=extend_schema(tags=['Polls'], description="Update a poll (Admin only)"),
+    partial_update=extend_schema(tags=['Polls'], description="Partial update (Admin only)"),
+    destroy=extend_schema(tags=['Polls'], description="Delete a poll (Admin only)")
 )
 class PollViewSet(viewsets.ModelViewSet):
     serializer_class = PollSerializer
     permission_classes = [IsAdminOrReadOnly]
 
-    def perform_create(self, serializer):
-        serializer.save(created_by=self.request.user)
-
     def get_queryset(self):
-        qs = Poll.objects.all().order_by("-created_at")
         user = self.request.user
-        if user.is_authenticated and user.role == "voter":
-            qs = qs.filter(is_active=True, created_by=user.assigned_admin)
-        return qs
+        if not user.is_authenticated:
+            return Poll.objects.none()
+        return Poll.objects.filter(organization=user.organization).order_by("-created_at")
 
+    def perform_create(self, serializer):
+        serializer.save(created_by=self.request.user, organization=self.request.user.organization)
 
-@extend_schema_view(
-    list=extend_schema(
-        tags=['Choices'], description="List choices with vote counts"),
-    create=extend_schema(
-        tags=['Choices'], description="Create a choice for a poll (Admin only)"),
-)
+# Choices
 class ChoiceViewSet(viewsets.ModelViewSet):
     serializer_class = ChoiceSerializer
     permission_classes = [IsAdminOrReadOnly]
@@ -119,10 +74,7 @@ class ChoiceViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         return Choice.objects.annotate(votes_count=Count("votes"))
 
-# ----------------- Voting -----------------
-
-
-@extend_schema(tags=['Voting'], description="Cast a vote for a poll")
+# Voting
 class VoteCreateView(generics.CreateAPIView):
     serializer_class = VoteSerializer
     permission_classes = [IsVoterRole, IsAuthenticated]
@@ -131,29 +83,24 @@ class VoteCreateView(generics.CreateAPIView):
     def post(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-
         poll = serializer.validated_data["poll"]
-        choice = serializer.validated_data["choice"]
         voter = request.user
+        choice = serializer.validated_data["choice"]
+
+        # Multi-org isolation
+        if poll.organization != voter.organization:
+            return Response({"detail": "You cannot vote on this poll."}, status=403)
 
         if not poll.is_votable:
-            return Response({"detail": "Poll is not currently votable."}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"detail": "Poll is not currently votable."}, status=400)
 
-        vote, created = Vote.objects.get_or_create(
-            poll=poll,
-            voter=voter,
-            defaults={'choice': choice}
-        )
+        vote, created = Vote.objects.get_or_create(poll=poll, voter=voter, defaults={'choice': choice})
         if not created:
-            return Response({"detail": "You have already voted in this poll."}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"detail": "You have already voted in this poll."}, status=400)
 
-        out = VoteSerializer(vote)
-        return Response(out.data, status=status.HTTP_201_CREATED)
+        return Response(VoteSerializer(vote).data, status=201)
 
-# ----------------- Poll Stats -----------------
-
-
-@extend_schema(tags=['Poll Stats'], description="Retrieve live statistics for a poll")
+# Poll Stats
 class PollStatsView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -163,7 +110,7 @@ class PollStatsView(APIView):
         except Poll.DoesNotExist:
             return Response({"detail": "Poll not found."}, status=404)
 
-        if request.user.role == "voter" and poll.created_by != request.user.assigned_admin:
+        if poll.organization != request.user.organization:
             return Response({"detail": "You cannot access this poll."}, status=403)
 
         total_votes = Vote.objects.filter(poll=poll).count()
@@ -176,3 +123,25 @@ class PollStatsView(APIView):
             "total_votes": total_votes,
             "choices": list(choices)
         })
+
+class AdminInviteUserView(generics.CreateAPIView):
+    serializer_class = OrgUserInviteSerializer
+    permission_classes = [IsAuthenticated, IsAdminRole]
+
+    def create(self, request, *args, **kwargs):
+        """
+        Admin can invite/register a new voter in their organization.
+        """
+        serializer = self.get_serializer(data=request.data, context={'request': request})
+        serializer.is_valid(raise_exception=True)
+        user = serializer.save()
+        return Response({
+            "id": str(user.id),
+            "username": user.username,
+            "email": user.email,
+            "voter_id": user.voter_id,
+            "organization": {
+                "id": str(user.organization.id),
+                "name": user.organization.name
+            }
+        }, status=status.HTTP_201_CREATED)
