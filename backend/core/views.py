@@ -1,17 +1,36 @@
-from rest_framework import generics, viewsets, status, serializers
+from rest_framework import generics, viewsets, status
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from rest_framework_simplejwt.views import TokenObtainPairView
-from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
-from django.utils import timezone
+from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 from django.db import transaction
 from django.db.models import Count
-from drf_spectacular.utils import extend_schema, extend_schema_view, OpenApiParameter
+from drf_spectacular.utils import extend_schema, extend_schema_view
 
-from .models import User, Poll, Choice, Vote
-from .serializers import RegisterSerializer, PollSerializer, ChoiceSerializer, VoteSerializer
-from .permissions import IsAdminRole, IsVoterRole, IsAdminOrReadOnly
+from .models import Poll, Choice, Vote
+from .serializers import RegisterSerializer, PollSerializer, ChoiceSerializer, VoteSerializer, AdminTokenObtainPairSerializer, VoterTokenObtainPairSerializer
+from .permissions import IsVoterRole, IsAdminOrReadOnly
+
+
+class CustomTokenObtainPairView(TokenObtainPairView):
+    @extend_schema(
+        tags=["Authentication"],
+        summary="Get access & refresh tokens",
+        description="Authenticate a user and return JWT access + refresh tokens."
+    )
+    def post(self, request, *args, **kwargs):
+        return super().post(request, *args, **kwargs)
+
+
+class CustomTokenRefreshView(TokenRefreshView):
+    @extend_schema(
+        tags=["Authentication"],
+        summary="Refresh access token",
+        description="Submit a refresh token and receive a new access token."
+    )
+    def post(self, request, *args, **kwargs):
+        return super().post(request, *args, **kwargs)
+
 
 # ----------------- Registration -----------------
 @extend_schema(tags=['Authentication'], description="Register a new voter")
@@ -28,6 +47,7 @@ class VoterRegisterView(generics.CreateAPIView):
         headers = self.get_success_headers(serializer.data)
         return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
 
+
 @extend_schema(tags=['Authentication'], description="Register a new admin")
 class AdminRegisterView(generics.CreateAPIView):
     serializer_class = RegisterSerializer
@@ -43,36 +63,33 @@ class AdminRegisterView(generics.CreateAPIView):
         return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
 
 # ----------------- Login -----------------
+
+
 @extend_schema(tags=['Authentication'], description="Admin login to obtain JWT token")
 class AdminLoginView(TokenObtainPairView):
-    serializer_class = type(
-        'AdminTokenObtainPairSerializer', 
-        (TokenObtainPairSerializer,),
-        {
-            'validate': lambda self, attrs: super(TokenObtainPairSerializer, self).validate(attrs) 
-            if self.user.role == "admin" else serializers.ValidationError("User is not an admin.")
-        }
-    )
+    serializer_class = AdminTokenObtainPairSerializer
+
 
 @extend_schema(tags=['Authentication'], description="Voter login to obtain JWT token")
 class VoterLoginView(TokenObtainPairView):
-    serializer_class = type(
-        'VoterTokenObtainPairSerializer', 
-        (TokenObtainPairSerializer,),
-        {
-            'validate': lambda self, attrs: super(TokenObtainPairSerializer, self).validate(attrs) 
-            if self.user.role == "voter" else serializers.ValidationError("User is not a voter.")
-        }
-    )
+    serializer_class = VoterTokenObtainPairSerializer
 
 # ----------------- Polls -----------------
+
+
 @extend_schema_view(
-    list=extend_schema(tags=['Polls'], description="List polls available to the user"),
-    retrieve=extend_schema(tags=['Polls'], description="Retrieve details of a poll"),
-    create=extend_schema(tags=['Polls'], description="Create a new poll (Admin only)"),
-    update=extend_schema(tags=['Polls'], description="Update a poll (Admin only)"),
-    partial_update=extend_schema(tags=['Polls'], description="Partially update a poll (Admin only)"),
-    destroy=extend_schema(tags=['Polls'], description="Delete a poll (Admin only)"),
+    list=extend_schema(
+        tags=['Polls'], description="List polls available to the user"),
+    retrieve=extend_schema(
+        tags=['Polls'], description="Retrieve details of a poll"),
+    create=extend_schema(
+        tags=['Polls'], description="Create a new poll (Admin only)"),
+    update=extend_schema(
+        tags=['Polls'], description="Update a poll (Admin only)"),
+    partial_update=extend_schema(
+        tags=['Polls'], description="Partially update a poll (Admin only)"),
+    destroy=extend_schema(
+        tags=['Polls'], description="Delete a poll (Admin only)"),
 )
 class PollViewSet(viewsets.ModelViewSet):
     serializer_class = PollSerializer
@@ -88,9 +105,12 @@ class PollViewSet(viewsets.ModelViewSet):
             qs = qs.filter(is_active=True, created_by=user.assigned_admin)
         return qs
 
+
 @extend_schema_view(
-    list=extend_schema(tags=['Choices'], description="List choices with vote counts"),
-    create=extend_schema(tags=['Choices'], description="Create a choice for a poll (Admin only)"),
+    list=extend_schema(
+        tags=['Choices'], description="List choices with vote counts"),
+    create=extend_schema(
+        tags=['Choices'], description="Create a choice for a poll (Admin only)"),
 )
 class ChoiceViewSet(viewsets.ModelViewSet):
     serializer_class = ChoiceSerializer
@@ -100,6 +120,8 @@ class ChoiceViewSet(viewsets.ModelViewSet):
         return Choice.objects.annotate(votes_count=Count("votes"))
 
 # ----------------- Voting -----------------
+
+
 @extend_schema(tags=['Voting'], description="Cast a vote for a poll")
 class VoteCreateView(generics.CreateAPIView):
     serializer_class = VoteSerializer
@@ -129,6 +151,8 @@ class VoteCreateView(generics.CreateAPIView):
         return Response(out.data, status=status.HTTP_201_CREATED)
 
 # ----------------- Poll Stats -----------------
+
+
 @extend_schema(tags=['Poll Stats'], description="Retrieve live statistics for a poll")
 class PollStatsView(APIView):
     permission_classes = [IsAuthenticated]

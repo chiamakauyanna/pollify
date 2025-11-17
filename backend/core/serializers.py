@@ -1,6 +1,8 @@
 from rest_framework import serializers
 from .models import User, Poll, Choice, Vote
 from django.contrib.auth.password_validation import validate_password
+from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
+
 
 class RegisterSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True, required=True, validators=[validate_password])
@@ -50,4 +52,19 @@ class VoteSerializer(serializers.ModelSerializer):
     def validate(self, data):
         if data['choice'].poll_id != data['poll'].id:
             raise serializers.ValidationError("Choice does not belong to the selected poll.")
+        return data
+
+class AdminTokenObtainPairSerializer(TokenObtainPairSerializer):
+    def validate(self, attrs):
+        data = super().validate(attrs)
+        if self.user.role != "admin":
+            raise serializers.ValidationError("User is not an admin.")
+        return data
+
+
+class VoterTokenObtainPairSerializer(TokenObtainPairSerializer):
+    def validate(self, attrs):
+        data = super().validate(attrs)
+        if self.user.role != "voter":
+            raise serializers.ValidationError("User is not a voter.")
         return data
