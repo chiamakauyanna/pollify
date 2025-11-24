@@ -1,179 +1,242 @@
-# Pollify – Online Polling System
+# Pollify Backend
 
-![Pollify Banner](docs/screenshots/banner.png)
-
-## **Project Overview**
-
-Pollify is an online polling system where **admins create polls** and **voters cast votes**.
-It supports role-based authentication, live statistics, and ensures voters can only access polls from their assigned admin.
-
-### **Features**
-
-- **Role-based registration and login** (Admin or Voter)
-- **Admin functionality:**
-
-  - Create polls
-  - Add choices to polls
-  - View live poll statistics
-
-- **Voter functionality:**
-
-  - View active polls from their assigned admin
-  - Vote once per poll
-  - View live stats of accessible polls
-
-- **Secure voting** with one-vote-per-poll enforcement
-- **JWT authentication** for both Admin and Voter
+A **Django REST Framework** backend for a secure poll and voting system.
+Admins can create polls, add choices, and generate **magic vote links** for voters. Voters can submit votes via unique links without needing accounts.
 
 ---
 
-## **Tech Stack**
+## Table of Contents
 
-- **Backend:** Django 5.2, Django REST Framework
-- **Authentication:** JWT via `djangorestframework-simplejwt`
-- **Database:** SQLite (can switch to PostgreSQL for production)
-- **API Docs:** DRF Spectacular (Swagger / Redoc)
-- **Frontend:** Next.js
+* [Features](#features)
+* [Tech Stack](#tech-stack)
+* [Installation](#installation)
+* [Configuration](#configuration)
+* [Database & Migrations](#database--migrations)
+* [Admin Setup](#admin-setup)
+* [API Endpoints](#api-endpoints)
+* [Authentication](#authentication)
+* [Voting Flow](#voting-flow)
+* [License](#license)
 
 ---
 
-## **Setup**
+## Features
 
-1. Clone the repo:
+* Admin-only poll creation and management.
+* Add multiple choices per poll.
+* Generate magic vote links for voters (no accounts required).
+* Voters can submit votes using unique tokens.
+* View poll results **after poll ends**.
+* JWT-based authentication for admins.
+
+---
+
+## Tech Stack
+
+* Python 3.13
+* Django 4.x
+* Django REST Framework
+* Simple JWT (`djangorestframework-simplejwt`)
+* SQLite (default, can switch to Postgres/MySQL)
+
+---
+
+## Installation
+
+1. Clone the repository:
 
 ```bash
-git clone https://github.com/chiamakauyanna/pollify.git
-cd pollify
+git clone <repo-url>
+cd backend
 ```
 
-2. Create a virtual environment and install dependencies:
+2. Create a virtual environment:
 
 ```bash
 python -m venv venv
-source venv/bin/activate  # Linux/macOS
-venv\Scripts\activate     # Windows
+source venv/Scripts/activate  # Windows
+# OR
+source venv/bin/activate      # macOS/Linux
+```
+
+3. Install dependencies:
+
+```bash
 pip install -r requirements.txt
 ```
 
-3. Apply migrations:
+4. Run migrations:
 
 ```bash
 python manage.py makemigrations
 python manage.py migrate
 ```
 
-4. Create a superuser (optional for admin access via Django admin):
+5. Create a superuser (admin):
 
 ```bash
 python manage.py createsuperuser
 ```
 
-5. Run the development server:
+6. Run the development server:
 
 ```bash
 python manage.py runserver
 ```
 
-6. Access API docs:
+---
 
-- Swagger: `http://127.0.0.1:8000/api/docs/`
-- Redoc: `http://127.0.0.1:8000/api/redoc/`
+## Configuration
+
+* **Environment Variables:** You can configure a `.env` file for secrets such as `SECRET_KEY`, database credentials, or JWT settings.
+* **Default DB:** SQLite (`db.sqlite3`) is used by default.
+* **Switching DB:** Update `DATABASES` in `settings.py` for PostgreSQL, MySQL, etc.
 
 ---
 
-## **API Endpoints**
+## Database & Migrations
 
-### **Authentication**
+Models:
 
-| Endpoint                    | Method | Role  | Description                                   |
-| --------------------------- | ------ | ----- | --------------------------------------------- |
-| `/api/auth/register/admin/` | POST   | Admin | Register a new admin                          |
-| `/api/auth/register/voter/` | POST   | Voter | Register a new voter (auto-assigned to admin) |
-| `/api/auth/login/admin/`    | POST   | Admin | Admin login                                   |
-| `/api/auth/login/voter/`    | POST   | Voter | Voter login                                   |
-| `/api/token/refresh/`       | POST   | All   | Refresh JWT token                             |
+* **User**: Custom user model (admins only)
+* **Poll**: Poll object with title, description, start/end time
+* **Choice**: Options for a poll
+* **VoteLink**: Magic link for one-time voting
+* **Vote**: Stores individual votes
 
-### **Polls**
+Run migrations:
 
-| Endpoint                 | Method | Role  | Description                                                   |
-| ------------------------ | ------ | ----- | ------------------------------------------------------------- |
-| `/api/polls/`            | GET    | All   | List polls (voters only see active polls from assigned admin) |
-| `/api/polls/`            | POST   | Admin | Create a new poll                                             |
-| `/api/polls/<id>/`       | GET    | All   | Get poll details                                              |
-| `/api/polls/<id>/`       | PATCH  | Admin | Update poll (e.g., toggle `is_active`)                        |
-| `/api/polls/<id>/stats/` | GET    | All   | Live poll stats                                               |
-
-### **Choices**
-
-| Endpoint             | Method       | Role  | Description                    |
-| -------------------- | ------------ | ----- | ------------------------------ |
-| `/api/choices/`      | GET          | All   | List choices (with vote count) |
-| `/api/choices/`      | POST         | Admin | Create a choice for a poll     |
-| `/api/choices/<id>/` | PATCH/DELETE | Admin | Update/Delete a choice         |
-
-### **Voting**
-
-| Endpoint     | Method | Role  | Description                |
-| ------------ | ------ | ----- | -------------------------- |
-| `/api/vote/` | POST   | Voter | Cast a vote (one per poll) |
-
----
-
-## **Roles and Permissions**
-
-| Role      | Capabilities                                                          |
-| --------- | --------------------------------------------------------------------- |
-| **Admin** | Create/manage polls and choices, view stats, cannot vote              |
-| **Voter** | View active polls from assigned admin, vote once per poll, view stats |
-
----
-
-## **Mermaid Flowchart**
-
-```mermaid
-flowchart TD
-    A[Registration] --> B1[Admin SignUp]
-    A --> B2[Voter SignUp]
-
-    B1 --> C1[Admin Login]
-    B2 --> C2[Voter Login]
-
-    C1 --> D1[Create Polls]
-    D1 --> E1[Add Choices]
-    D1 --> F1[View Poll Stats]
-
-    C2 --> D2[See Active Polls]
-    D2 --> E2[Vote on Poll]
-    E2 --> F2[View Poll Stats]
-
-    style B1 fill:#ffcccc,stroke:#ff0000,stroke-width:2px
-    style B2 fill:#ccffcc,stroke:#00cc00,stroke-width:2px
-    style C1 fill:#ffcccc,stroke:#ff0000,stroke-width:2px
-    style C2 fill:#ccffcc,stroke:#00cc00,stroke-width:2px
-    style D1 fill:#ffcccc,stroke:#ff0000,stroke-width:2px
-    style D2 fill:#ccffcc,stroke:#00cc00,stroke-width:2px
-    style E1 fill:#ffcccc,stroke:#ff0000,stroke-width:2px
-    style E2 fill:#ccffcc,stroke:#00cc00,stroke-width:2px
-    style F1 fill:#ffcccc,stroke:#ff0000,stroke-width:2px
-    style F2 fill:#ccffcc,stroke:#00cc00,stroke-width:2px
+```bash
+python manage.py makemigrations core
+python manage.py migrate
 ```
 
-- **Red boxes** = Admin-only actions
-- **Green boxes** = Voter actions
+---
 
-> Mermaid diagrams can be rendered directly in GitHub README if you enable Mermaid support, or use tools like VS Code with Mermaid preview.
+## Admin Setup
+
+Admins are created via Django admin or `createsuperuser`. Only `is_staff=True` users can:
+
+* Create polls
+* Add choices
+* Generate vote links
+
+Voters do **not** require accounts.
 
 ---
 
-## **Database Models**
+## API Endpoints
 
-- **User**: `username`, `email`, `role`, `unique_id`, `voter_id` (for voters only)
-- **Poll**: `title`, `description`, `created_by`, `is_active`, `start_at`, `end_at`
-- **Choice**: `poll`, `text`
-- **Vote**: `poll`, `choice`, `voter` (unique per poll)
+### **Authentication (Admin Only)**
+
+| Endpoint          | Method | Description                                |
+| ----------------- | ------ | ------------------------------------------ |
+| `/token/`         | POST   | Get JWT token (requires username/password) |
+| `/token/refresh/` | POST   | Refresh JWT access token                   |
+
+**Example Request:**
+
+```json
+POST /token/
+{
+  "username": "Alex",
+  "password": "Alex1234"
+}
+```
+
+**Response:**
+
+```json
+{
+  "refresh": "<refresh_token>",
+  "access": "<access_token>"
+}
+```
 
 ---
 
-## **License**
+### **Poll Management (Admin Only)**
 
-MIT License © 2025 Chiamaka Uyanna
+| Endpoint                          | Method    | Description                |
+| --------------------------------- | --------- | -------------------------- |
+| `/polls/`                         | GET       | List all polls             |
+| `/polls/`                         | POST      | Create a new poll          |
+| `/polls/{id}/`                    | GET       | Get a poll                 |
+| `/polls/{id}/`                    | PUT/PATCH | Update a poll              |
+| `/polls/{id}/`                    | DELETE    | Delete a poll              |
+| `/polls/{id}/generate_vote_link/` | POST      | Generate a magic vote link |
+
+**Sample Poll POST Request:**
+
+```json
+{
+  "title": "Favorite Language",
+  "description": "Pick one",
+  "choices": [
+    {"text": "Python"},
+    {"text": "JavaScript"}
+  ],
+  "vote_links": [
+    {"invitee_email": "test@example.com", "invitee_name": "Test User"}
+  ]
+}
+```
+
+---
+
+### **Public Voting**
+
+| Endpoint         | Method | Description                                    |
+| ---------------- | ------ | ---------------------------------------------- |
+| `/public-polls/` | GET    | List active polls available for voting         |
+| `/vote/`         | POST   | Submit a vote using a token                    |
+| `/poll-results/` | GET    | View poll results (after poll ends, via token) |
+
+**Sample Vote Request:**
+
+```json
+POST /vote/
+{
+  "token": "dbd22f4f-ea1f-4cc2-b60a-1c6cd9d5ee3a",
+  "choice_id": "b2a7fa8c-8b6f-4ef1-b7b2-8c18ef98f372"
+}
+```
+
+**Sample Poll Results Request:**
+
+```http
+GET /poll-results/?token=dbd22f4f-ea1f-4cc2-b60a-1c6cd9d5ee3a
+```
+
+---
+
+## Authentication Flow (Frontend)
+
+* Admin logs in using `/token/` endpoint.
+* Backend returns JWT token.
+* Store token on frontend (React state, context, or secure storage).
+* Include token in `Authorization` header for protected endpoints.
+
+**Header Example:**
+
+```http
+Authorization: Bearer <access_token>
+```
+
+Voters use **vote links**, no login required.
+
+---
+
+## Voting Flow
+
+1. Admin generates vote links for a poll.
+2. Voter receives a link/token.
+3. Voter submits choice with the token via `/vote/`.
+4. Backend validates token, records vote, marks link as used.
+5. Poll results are visible after poll ends.
+
+---
+
+## License
+
+MIT License © 2025 Chiamaka
