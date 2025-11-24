@@ -1,29 +1,21 @@
-from rest_framework.routers import DefaultRouter
 from django.urls import path, include
-from .views import (
-    PollViewSet, ChoiceViewSet, VoteCreateView, PollStatsView,
-    VoterRegisterView, AdminRegisterView, AdminInviteUserView, 
-    OrgTokenObtainPairView, CustomTokenRefreshView,
-)
+from rest_framework.routers import DefaultRouter
+from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
+from .views import PollViewSet, VoteCreateView, PollListView, PollResultsView
 
 router = DefaultRouter()
-router.register("polls", PollViewSet, basename="poll")
-router.register("choices", ChoiceViewSet, basename="choice")
+router.register(r"polls", PollViewSet, basename="polls")
 
 urlpatterns = [
-    # Registration
-    path("auth/register/voter/", VoterRegisterView.as_view(), name="register_voter"),
-    path("auth/register/admin/", AdminRegisterView.as_view(), name="register_admin"),
-    path("auth/invite/", AdminInviteUserView.as_view(), name="admin_invite_user"),
+    # JWT login
+    path("token/", TokenObtainPairView.as_view(), name="token_obtain_pair"),
+    path("token/refresh/", TokenRefreshView.as_view(), name="token_refresh"),
 
-    # Token login/refresh
-    path("token/", OrgTokenObtainPairView.as_view(), name="token_obtain_pair"),
-    path("token/refresh/", CustomTokenRefreshView.as_view(), name="token_refresh"),
+    # Public voting endpoints
+    path("vote/", VoteCreateView.as_view(), name="vote-create"),
+    path("public-polls/", PollListView.as_view(), name="public-polls"),
+    path("poll-results/", PollResultsView.as_view(), name="poll-results"),
 
-    # API
+    # Poll admin routes
     path("", include(router.urls)),
-    path("vote/", VoteCreateView.as_view(), name="vote"),
-    path("polls/<uuid:pk>/stats/", PollStatsView.as_view(), name="poll-stats"),
-
-
 ]

@@ -3,59 +3,27 @@ from django.db import models
 from django.contrib.auth.models import AbstractUser
 from django.utils import timezone
 
-ROLE_CHOICES = (("admin", "Admin"), ("voter", "Voter"))
-
-
-def generate_voter_id():
-    ts = timezone.now().strftime("%Y%m%d%H%M%S")
-    suffix = uuid.uuid4().hex[:4].upper()
-    return f"VOTER-{ts}-{suffix}"
-
-
-class Organization(models.Model):
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    name = models.CharField(max_length=255, unique=True)
-    created_at = models.DateTimeField(auto_now_add=True)
-
-    def __str__(self):
-        return self.name
-
 
 class User(AbstractUser):
-    role = models.CharField(
-        max_length=10, choices=ROLE_CHOICES, default="voter")
-    unique_id = models.UUIDField(
-        default=uuid.uuid4, editable=False, unique=True)
-    voter_id = models.CharField(
-        max_length=32, blank=True, null=True, unique=True)
-    organization = models.ForeignKey(
-        Organization,
-        on_delete=models.CASCADE,
-        null=True,
-        blank=True,
-        related_name="users"
-    )
-
-    def save(self, *args, **kwargs):
-        if self.role == "voter" and not self.voter_id:
-            vid = generate_voter_id()
-            while User.objects.filter(voter_id=vid).exists():
-                vid = generate_voter_id()
-            self.voter_id = vid
-        super().save(*args, **kwargs)
+    """
+    Admins only. Handles poll creation & vote link generation.
+    """
+    def __str__(self):
+        return self.username
 
 
 class Poll(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    organization = models.ForeignKey(Organization, on_delete=models.CASCADE, null=True,
-                                     blank=True)
     title = models.CharField(max_length=255)
     description = models.TextField(blank=True)
-    created_by = models.ForeignKey(User, on_delete=models.CASCADE)
+    created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name="created_polls")
     start_at = models.DateTimeField(null=True, blank=True)
     end_at = models.DateTimeField(null=True, blank=True)
     is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return self.title
 
     @property
     def is_votable(self):
@@ -68,23 +36,54 @@ class Poll(models.Model):
             return False
         return True
 
+    @property
+    def show_results(self):
+        return self.end_at and timezone.now() > self.end_at
+
 
 class Choice(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    poll = models.ForeignKey(
-        Poll, on_delete=models.CASCADE, related_name="choices")
+    poll = models.ForeignKey(Poll, on_delete=models.CASCADE, related_name="choices")
     text = models.CharField(max_length=255)
+
+    def __str__(self):
+        return f"{self.text} ({self.poll.title})"
+
+
+class VoteLink(models.Model):
+    """
+    Magic link system: each token allows one vote.
+    Voters do not need an account.
+    """
+    token = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    poll = models.ForeignKey(Poll, on_delete=models.CASCADE, related_name="vote_links")
+    invitee_email = models.EmailField(max_length=254, blank=True, null=True)
+    invitee_name = models.CharField(max_length=255, blank=True, null=True)
+    used = models.BooleanField(default=False)
+    used_at = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def mark_used(self):
+        self.used = True
+        self.used_at = timezone.now()
+        self.save(update_fields=["used", "used_at"])
+
+    def __str__(self):
+        return f"VoteLink({self.token}) -> {self.poll.title}"
 
 
 class Vote(models.Model):
+    """
+    Stores a vote cast using a VoteLink.
+    """
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    poll = models.ForeignKey(Poll, on_delete=models.CASCADE)
-    choice = models.ForeignKey(Choice, on_delete=models.CASCADE)
-    voter = models.ForeignKey(User, on_delete=models.CASCADE)
+    poll = models.ForeignKey(Poll, on_delete=models.CASCADE, related_name="votes")
+    choice = models.ForeignKey(Choice, on_delete=models.CASCADE, related_name="votes")
+    votelink = models.OneToOneField(VoteLink, on_delete=models.CASCADE, related_name="vote")
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        constraints = [
-            models.UniqueConstraint(
-                fields=["poll", "voter"], name="unique_vote_per_poll")
-        ]
+        unique_together = (("poll", "votelink"),)
+
+    def __str__(self):
+        return f"Vote ({self.poll.title}) -> {self.choice.text}"

@@ -1,147 +1,143 @@
-from rest_framework import generics, viewsets, status
-from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework import viewsets, generics, status
 from rest_framework.response import Response
-from rest_framework.views import APIView
-from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
-from django.db import transaction
-from django.db.models import Count
-from drf_spectacular.utils import extend_schema, extend_schema_view
+from rest_framework.permissions import AllowAny
+from django.utils import timezone
+import uuid
 
-from .models import Poll, Choice, Vote
-from .serializers import RegisterSerializer, PollSerializer, ChoiceSerializer, VoteSerializer, OrgTokenObtainPairSerializer, OrgUserInviteSerializer
-from .permissions import IsVoterRole, IsAdminOrReadOnly, IsAdminRole
+from .models import Poll, Choice, VoteLink, Vote
+from .serializers import PollSerializer, ChoiceSerializer, VoteLinkSerializer, VoteSerializer, PollResultsSerializer
+from .permissions import IsAdminUser
 
 
-# Auth
-class OrgTokenObtainPairView(TokenObtainPairView):
-    serializer_class = OrgTokenObtainPairSerializer
-
-class CustomTokenRefreshView(TokenRefreshView):
-    pass
-
-# Registration
-class VoterRegisterView(generics.CreateAPIView):
-    serializer_class = RegisterSerializer
-    permission_classes = [AllowAny]
-
-    def create(self, request, *args, **kwargs):
-        data = request.data.copy()
-        data['role'] = 'voter'
-        serializer = self.get_serializer(data=data)
-        serializer.is_valid(raise_exception=True)
-        self.perform_create(serializer)
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
-
-class AdminRegisterView(generics.CreateAPIView):
-    serializer_class = RegisterSerializer
-    permission_classes = [AllowAny]
-
-    def create(self, request, *args, **kwargs):
-        data = request.data.copy()
-        data['role'] = 'admin'
-        serializer = self.get_serializer(data=data)
-        serializer.is_valid(raise_exception=True)
-        self.perform_create(serializer)
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
-
-# Polls
-@extend_schema_view(
-    list=extend_schema(tags=['Polls'], description="List polls available to the user"),
-    retrieve=extend_schema(tags=['Polls'], description="Retrieve details of a poll"),
-    create=extend_schema(tags=['Polls'], description="Create a new poll (Admin only)"),
-    update=extend_schema(tags=['Polls'], description="Update a poll (Admin only)"),
-    partial_update=extend_schema(tags=['Polls'], description="Partial update (Admin only)"),
-    destroy=extend_schema(tags=['Polls'], description="Delete a poll (Admin only)")
-)
 class PollViewSet(viewsets.ModelViewSet):
+    """
+    Admin CRUD for polls.
+    """
+    queryset = Poll.objects.all().order_by("-created_at")
     serializer_class = PollSerializer
-    permission_classes = [IsAdminOrReadOnly]
+    permission_classes = [IsAdminUser]
 
-    def get_queryset(self):
-        user = self.request.user
-        if not user.is_authenticated:
-            return Poll.objects.none()
-        return Poll.objects.filter(organization=user.organization).order_by("-created_at")
+    def create(self, request, *args, **kwargs):
+        data = request.data
+        choices_data = data.pop("choices", [])
+        vote_links_data = data.pop("vote_links", [])
 
-    def perform_create(self, serializer):
-        serializer.save(created_by=self.request.user, organization=self.request.user.organization)
-
-# Choices
-class ChoiceViewSet(viewsets.ModelViewSet):
-    serializer_class = ChoiceSerializer
-    permission_classes = [IsAdminOrReadOnly]
-
-    def get_queryset(self):
-        return Choice.objects.annotate(votes_count=Count("votes"))
-
-# Voting
-class VoteCreateView(generics.CreateAPIView):
-    serializer_class = VoteSerializer
-    permission_classes = [IsVoterRole, IsAuthenticated]
-
-    @transaction.atomic
-    def post(self, request, *args, **kwargs):
-        serializer = self.get_serializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        poll = serializer.validated_data["poll"]
-        voter = request.user
-        choice = serializer.validated_data["choice"]
-
-        # Multi-org isolation
-        if poll.organization != voter.organization:
-            return Response({"detail": "You cannot vote on this poll."}, status=403)
-
-        if not poll.is_votable:
-            return Response({"detail": "Poll is not currently votable."}, status=400)
-
-        vote, created = Vote.objects.get_or_create(poll=poll, voter=voter, defaults={'choice': choice})
-        if not created:
-            return Response({"detail": "You have already voted in this poll."}, status=400)
-
-        return Response(VoteSerializer(vote).data, status=201)
-
-# Poll Stats
-class PollStatsView(APIView):
-    permission_classes = [IsAuthenticated]
-
-    def get(self, request, pk):
-        try:
-            poll = Poll.objects.get(pk=pk)
-        except Poll.DoesNotExist:
-            return Response({"detail": "Poll not found."}, status=404)
-
-        if poll.organization != request.user.organization:
-            return Response({"detail": "You cannot access this poll."}, status=403)
-
-        total_votes = Vote.objects.filter(poll=poll).count()
-        choices = Choice.objects.filter(poll=poll).annotate(votes_count=Count("votes")).values(
-            "id", "text", "votes_count"
+        poll = Poll.objects.create(
+            title=data.get("title"),
+            description=data.get("description", ""),
+            start_at=data.get("start_at"),
+            end_at=data.get("end_at"),
+            is_active=data.get("is_active", True),
+            created_by=request.user
         )
 
-        return Response({
-            "poll": PollSerializer(poll).data,
-            "total_votes": total_votes,
-            "choices": list(choices)
-        })
+        for choice in choices_data:
+            Choice.objects.create(poll=poll, text=choice.get("text"))
 
-class AdminInviteUserView(generics.CreateAPIView):
-    serializer_class = OrgUserInviteSerializer
-    permission_classes = [IsAuthenticated, IsAdminRole]
+        vote_links = []
+        for v in vote_links_data:
+            token = uuid.uuid4()
+            vl = VoteLink.objects.create(
+                poll=poll,
+                token=token,
+                invitee_email=v.get("invitee_email"),
+                invitee_name=v.get("invitee_name")
+            )
+            vote_links.append(vl)
 
-    def create(self, request, *args, **kwargs):
-        """
-        Admin can invite/register a new voter in their organization.
-        """
-        serializer = self.get_serializer(data=request.data, context={'request': request})
-        serializer.is_valid(raise_exception=True)
-        user = serializer.save()
-        return Response({
-            "id": str(user.id),
-            "username": user.username,
-            "email": user.email,
-            "voter_id": user.voter_id,
-            "organization": {
-                "id": str(user.organization.id),
-                "name": user.organization.name
-            }
-        }, status=status.HTTP_201_CREATED)
+        serializer = PollSerializer(poll)
+        vote_links_serializer = VoteLinkSerializer(vote_links, many=True)
+        return Response(
+            {"poll": serializer.data, "vote_links": vote_links_serializer.data},
+            status=status.HTTP_201_CREATED
+        )
+
+    def generate_vote_link(self, request, pk=None):
+        poll = self.get_object()
+        invitee_email = request.data.get("invitee_email")
+        invitee_name = request.data.get("invitee_name")
+        token = uuid.uuid4()
+        vote_link = VoteLink.objects.create(
+            poll=poll,
+            token=token,
+            invitee_email=invitee_email,
+            invitee_name=invitee_name
+        )
+        serializer = VoteLinkSerializer(vote_link)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+
+class VoteCreateView(generics.CreateAPIView):
+    """
+    Submit a vote via a VoteLink.
+    """
+    permission_classes = [AllowAny]
+    serializer_class = VoteSerializer
+
+    def post(self, request, *args, **kwargs):
+        token = request.data.get("token")
+        choice_id = request.data.get("choice_id")
+        if not token or not choice_id:
+            return Response({"error": "token and choice_id are required."}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            votelink = VoteLink.objects.get(token=token)
+        except VoteLink.DoesNotExist:
+            return Response({"error": "Invalid vote link."}, status=status.HTTP_404_NOT_FOUND)
+
+        if votelink.used:
+            return Response({"error": "This vote link has already been used."}, status=status.HTTP_400_BAD_REQUEST)
+
+        poll = votelink.poll
+        if not poll.is_votable:
+            return Response({"error": "Voting for this poll is closed."}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            choice = Choice.objects.get(id=choice_id, poll=poll)
+        except Choice.DoesNotExist:
+            return Response({"error": "Invalid choice for this poll."}, status=status.HTTP_400_BAD_REQUEST)
+
+        Vote.objects.create(poll=poll, choice=choice, votelink=votelink)
+        votelink.mark_used()
+
+        return Response({"message": "Vote submitted successfully."}, status=status.HTTP_201_CREATED)
+
+
+class PollListView(generics.ListAPIView):
+    """
+    Public: active polls for voting.
+    """
+    queryset = Poll.objects.all()
+    serializer_class = PollSerializer
+    permission_classes = [AllowAny]
+
+    def get_queryset(self):
+        now = timezone.now()
+        return Poll.objects.filter(is_active=True, start_at__lte=now).order_by("-created_at")
+
+
+class PollResultsView(generics.RetrieveAPIView):
+    """
+    View poll results using a VoteLink, only after poll ends.
+    """
+    permission_classes = [AllowAny]
+    serializer_class = PollResultsSerializer
+
+    def get(self, request, *args, **kwargs):
+        token = request.query_params.get("token")
+        if not token:
+            return Response({"error": "token is required."}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            votelink = VoteLink.objects.get(token=token)
+        except VoteLink.DoesNotExist:
+            return Response({"error": "Invalid vote link."}, status=status.HTTP_404_NOT_FOUND)
+
+        poll = votelink.poll
+        if not poll.show_results:
+            return Response({"error": "Results are not available yet."}, status=status.HTTP_403_FORBIDDEN)
+
+        results = [{"choice_id": str(
+            c.id), "text": c.text, "votes": c.votes.count()} for c in poll.choices.all()]
+
+        return Response({"poll_id": str(poll.id), "title": poll.title, "description": poll.description, "results": results}, status=status.HTTP_200_OK)
