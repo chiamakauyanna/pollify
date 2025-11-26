@@ -3,7 +3,6 @@ from .models import Poll, Choice, VoteLink, Vote, User
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
 
-
 class ChoiceSerializer(serializers.ModelSerializer):
     votes_count = serializers.SerializerMethodField()
 
@@ -18,10 +17,12 @@ class ChoiceSerializer(serializers.ModelSerializer):
 class VoteLinkSerializer(serializers.ModelSerializer):
     class Meta:
         model = VoteLink
-        fields = ["token", "poll", "invitee_email", "invitee_name", "used"]
+        fields = ["token", "poll", "invitee_email", "invitee_name", "used", "created_at"]
+        read_only_fields = ["token", "used", "created_at"]
 
 
-class PollSerializer(serializers.ModelSerializer):
+# Admin-facing poll serializer (includes vote links)
+class PollAdminSerializer(serializers.ModelSerializer):
     choices = ChoiceSerializer(many=True, read_only=True)
     vote_links = VoteLinkSerializer(many=True, read_only=True)
     is_votable = serializers.ReadOnlyField()
@@ -29,47 +30,106 @@ class PollSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Poll
-        fields = ["id", "title", "description", "start_at", "end_at", "is_active", "choices", "is_votable", "vote_links", "show_results"]
+        fields = [
+            "id",
+            "title",
+            "description",
+            "start_at",
+            "end_at",
+            "is_active",
+            "choices",
+            "vote_links",
+            "is_votable",
+            "show_results",
+            "created_at",
+        ]
+
+
+# Public-facing poll serializer (hide vote links)
+class PollPublicSerializer(serializers.ModelSerializer):
+    choices = ChoiceSerializer(many=True, read_only=True)
+    is_votable = serializers.ReadOnlyField()
+    show_results = serializers.ReadOnlyField()
+
+    class Meta:
+        model = Poll
+        fields = [
+            "id",
+            "title",
+            "description",
+            "start_at",
+            "end_at",
+            "is_active",
+            "choices",
+            "is_votable",
+            "show_results",
+            "created_at",
+        ]
 
 
 class VoteSerializer(serializers.ModelSerializer):
+    # Frontend will send votelink token and choice id
     votelink = serializers.UUIDField(write_only=True)
-    choice = serializers.UUIDField()
+    choice = serializers.UUIDField(write_only=True)
 
     class Meta:
         model = Vote
-        fields = ["poll", "choice", "votelink"]
+        # We do not accept poll from client — it's derived from votelink
+        fields = ["votelink", "choice"]
 
     def validate(self, attrs):
         token = attrs.get("votelink")
+        choice_id = attrs.get("choice")
+
+        # Validate vote link
         try:
             votelink = VoteLink.objects.get(token=token)
         except VoteLink.DoesNotExist:
-            raise serializers.ValidationError("Invalid vote token.")
+            raise serializers.ValidationError({"votelink": "Invalid vote token."})
+
         if votelink.used:
-            raise serializers.ValidationError("This vote link has already been used.")
+            raise serializers.ValidationError({"votelink": "This vote link has already been used."})
+
+        poll = votelink.poll
+
+        # Validate poll is votable
+        if not poll.is_votable:
+            raise serializers.ValidationError({"poll": "Voting for this poll is closed."})
+
+        # Validate choice belongs to poll
+        try:
+            choice = Choice.objects.get(id=choice_id, poll=poll)
+        except Choice.DoesNotExist:
+            raise serializers.ValidationError({"choice": "Invalid choice for this poll."})
+
+        # Prevent double voting by same votelink is already enforced (votelink.used)
         attrs["votelink_obj"] = votelink
+        attrs["choice_obj"] = choice
+        attrs["poll_obj"] = poll
         return attrs
 
     def create(self, validated_data):
-        votelink = validated_data.pop("votelink_obj")
-        vote = Vote.objects.create(
-            poll=validated_data["poll"],
-            choice=validated_data["choice"],
-            votelink=votelink,
-        )
+        votelink = validated_data["votelink_obj"]
+        choice = validated_data["choice_obj"]
+        poll = validated_data["poll_obj"]
+
+        vote = Vote.objects.create(poll=poll, choice=choice, votelink=votelink)
         votelink.mark_used()
         return vote
+
 
 class PollResultsSerializer(serializers.Serializer):
     poll_id = serializers.UUIDField()
     title = serializers.CharField()
     description = serializers.CharField()
-    results = serializers.ListField()
+    results = serializers.ListField()  # list of {"choice_id", "text", "votes"}
+
+
 class AdminUserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ["id", "username", "email"]
+
 
 class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
     @classmethod

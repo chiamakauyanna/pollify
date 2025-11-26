@@ -1,7 +1,17 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 from rest_framework_simplejwt.views import TokenRefreshView
-from .views import PollViewSet, VoteCreateView, PollListView, PollResultsView, MyTokenObtainPairView
+from .views import (
+    PollViewSet,
+    VoteCreateView,
+    PollListView,
+    PollResultsView,
+    MyTokenObtainPairView,
+    PublicPollDetailView,
+    AdminAnalyticsView,
+    PollStatsView,
+    PublicClosedPollsView,
+)
 
 router = DefaultRouter()
 router.register(r"polls", PollViewSet, basename="polls")
@@ -14,8 +24,14 @@ urlpatterns = [
     # Public voting endpoints
     path("vote/", VoteCreateView.as_view(), name="vote-create"),
     path("public-polls/", PollListView.as_view(), name="public-polls"),
+    path("public-polls/<uuid:pk>/", PublicPollDetailView.as_view(), name="public-poll-detail"),
     path("poll-results/", PollResultsView.as_view(), name="poll-results"),
+    path("public-closed-polls/", PublicClosedPollsView.as_view(), name="public-closed-polls"),
 
-    # Poll admin routes
+    # Admin analytics & stats
+    path("admin/analytics/", AdminAnalyticsView.as_view(), name="admin-analytics"),
+    path("polls/<uuid:pk>/stats/", PollStatsView.as_view(), name="poll-stats"),
+
+    # Poll admin routes (ModelViewSet)
     path("", include(router.urls)),
 ]
