@@ -1,61 +1,26 @@
-import { useDispatch, useSelector } from "react-redux";
-import { AppDispatch } from "@/redux/store";
-import {
-  adminLoginThunk,
-  adminRegisterThunk,
-  voterLoginThunk,
-  voterRegisterThunk,
-  logout,
-} from "@/redux/slices/authSlice";
-import {
-  selectCurrentUser,
-  selectOrganization,
-  selectAuthLoading,
-  selectAuthError,
-  selectIsAuthenticated,
-} from "@/redux/selectors";
+import { useEffect, useState } from "react";
+import { getUserFromToken } from "@/services/api";
+import { getAccessToken } from "@/utils/tokenManager";
 
-// Hook
+
 export const useAuth = () => {
-  const dispatch = useDispatch<AppDispatch>();
+  const [user, setUser] = useState<any>(null);
+  
 
-  const user = useSelector(selectCurrentUser);
-  const organization = useSelector(selectOrganization);
-  const loading = useSelector(selectAuthLoading);
-  const error = useSelector(selectAuthError);
-  const isAuthenticated = useSelector(selectIsAuthenticated);
+  useEffect(() => {
+    const token = getAccessToken();
 
-  // Action dispatchers
-  const loginAdmin = (data: { username: string; password: string }) =>
-    dispatch(adminLoginThunk(data));
+    if (!token) {
+      setUser(null);
+      return;
+    }
 
-  const registerAdmin = (data: {
-    username: string;
-    email: string;
-    password: string;
-  }) => dispatch(adminRegisterThunk(data));
-
-  const loginVoter = (data: { username: string; password: string }) =>
-    dispatch(voterLoginThunk(data));
-
-  const registerVoter = (data: {
-    username: string;
-    email: string;
-    password: string;
-  }) => dispatch(voterRegisterThunk(data));
-
-  const logoutUser = () => dispatch(logout());
+    const decoded = getUserFromToken();
+    setUser(decoded);
+  }, []);
 
   return {
     user,
-    organization,
-    loading,
-    error,
-    isAuthenticated,
-    loginAdmin,
-    registerAdmin,
-    loginVoter,
-    registerVoter,
-    logoutUser,
+    isAdmin: user?.is_staff === true,
   };
 };

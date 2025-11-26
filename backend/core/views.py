@@ -1,11 +1,13 @@
 from rest_framework import viewsets, generics, status
 from rest_framework.response import Response
+from rest_framework.decorators import action
 from rest_framework.permissions import AllowAny
 from django.utils import timezone
 import uuid
 
 from .models import Poll, Choice, VoteLink, Vote
-from .serializers import PollSerializer, ChoiceSerializer, VoteLinkSerializer, VoteSerializer, PollResultsSerializer
+from .serializers import PollSerializer, VoteLinkSerializer, VoteSerializer, PollResultsSerializer, MyTokenObtainPairSerializer
+from rest_framework_simplejwt.views import TokenObtainPairView
 from .permissions import IsAdminUser
 
 
@@ -52,6 +54,7 @@ class PollViewSet(viewsets.ModelViewSet):
             status=status.HTTP_201_CREATED
         )
 
+    @action(detail=True, methods=["post"], url_path="generate-vote-link", permission_classes=[IsAdminUser])
     def generate_vote_link(self, request, pk=None):
         poll = self.get_object()
         invitee_email = request.data.get("invitee_email")
@@ -141,3 +144,6 @@ class PollResultsView(generics.RetrieveAPIView):
             c.id), "text": c.text, "votes": c.votes.count()} for c in poll.choices.all()]
 
         return Response({"poll_id": str(poll.id), "title": poll.title, "description": poll.description, "results": results}, status=status.HTTP_200_OK)
+
+class MyTokenObtainPairView(TokenObtainPairView):
+    serializer_class = MyTokenObtainPairSerializer

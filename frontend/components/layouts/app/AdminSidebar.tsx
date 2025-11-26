@@ -4,24 +4,26 @@ import { useDispatch, useSelector } from "react-redux";
 import { selectSidebarState, toggleSidebar } from "@/redux/slices/sidebarSlice";
 import Logo from "../../common/Logo";
 import { IoMdClose } from "react-icons/io";
-import { MdDashboard, MdHowToVote } from "react-icons/md"; 
-import { SidebarProps } from "@/Interfaces/interface";
+import { MdDashboard, MdAddCircle, MdListAlt, MdBarChart } from "react-icons/md";
 
-const Sidebar: React.FC<SidebarProps> = () => {
+const AdminSidebar: React.FC = () => {
   const isOpen = useSelector(selectSidebarState);
   const dispatch = useDispatch();
   const router = useRouter();
 
-  const menuItems = [
-    { name: "Dashboard", href: "/dashboard", icon: <MdDashboard /> },
-    { name: "Vote", href: "/vote", icon: <MdHowToVote /> },
-  ];
+  // menu items
+  const menuItems =  [
+        { name: "Admin Overview", href: "/dashboard/admin", icon: <MdDashboard /> },
+        { name: "Create Poll", href: "/dashboard/admin/create", icon: <MdAddCircle /> },
+        { name: "Manage Polls", href: "/dashboard/admin/polls", icon: <MdListAlt /> },
+        { name: "Poll Results", href: "/dashboard/admin/results", icon: <MdBarChart /> },
+      ]
 
   return (
     <aside
       className={`bg-background h-screen transition-all fixed md:relative z-50 ${
         isOpen ? "lg:w-72 md:w-64 w-58" : "w-20 md:w-20"
-      }  md:block ${isOpen ? "left-0" : "-left-full"} md:left-0 top-0`}
+      } md:block ${isOpen ? "left-0" : "-left-full"} md:left-0 top-0`}
     >
       {/* Menu Button - Toggle Sidebar */}
       <div className="flex items-center gap-3 p-6">
@@ -37,6 +39,7 @@ const Sidebar: React.FC<SidebarProps> = () => {
         </div>
       </div>
 
+      {/* Menu */}
       <div className="bg-primary h-full flex flex-col justify-between py-12 rounded-tr-4xl">
         <nav className="space-y-8 mt-6 pt-6 pl-6 text-background">
           {menuItems.map((item) => (
@@ -59,4 +62,4 @@ const Sidebar: React.FC<SidebarProps> = () => {
   );
 };
 
-export default Sidebar;
+export default AdminSidebar;

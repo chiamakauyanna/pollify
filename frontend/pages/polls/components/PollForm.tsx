@@ -1,8 +1,14 @@
 import { useState } from "react";
-import { usePolls } from "@/hooks/usePolls";
+import { useDispatch } from "react-redux";
+import { createPoll, fetchPolls } from "@/redux/slices/pollSlice";
+import { AppDispatch } from "@/redux/store";
 
-const PollForm = () => {
-  const { create, addChoice, loadPolls } = usePolls();
+interface PollFormProps {
+  onPollCreated?: () => void; // callback to notify parent
+}
+
+const PollForm: React.FC<PollFormProps> = ({ onPollCreated }) => {
+  const dispatch = useDispatch<AppDispatch>();
 
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
@@ -17,7 +23,8 @@ const PollForm = () => {
   };
 
   const addChoiceField = () => setChoices([...choices, ""]);
-  const removeChoiceField = (index: number) => setChoices(choices.filter((_, i) => i !== index));
+  const removeChoiceField = (index: number) =>
+    setChoices(choices.filter((_, i) => i !== index));
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -25,18 +32,20 @@ const PollForm = () => {
     if (choices.some((c) => !c.trim())) return alert("All choices must be filled");
 
     try {
-      const newPoll = await create({
-        title,
-        description,
-        start_at: startAt || undefined,
-        end_at: endAt || undefined,
-      });
+      await dispatch(
+        createPoll({
+          title,
+          description,
+          start_at: startAt || undefined,
+          end_at: endAt || undefined,
+          choices: choices.map((text) => ({ text })),
+        })
+      ).unwrap();
 
-      for (const choiceText of choices) {
-        await addChoice({ poll: newPoll.id, text: choiceText });
-      }
+      // Notify parent dashboard to refresh polls
+      if (onPollCreated) onPollCreated();
 
-      loadPolls();
+      // Reset form
       setTitle("");
       setDescription("");
       setStartAt("");
@@ -56,7 +65,6 @@ const PollForm = () => {
           value={title}
           onChange={(e) => setTitle(e.target.value)}
           className="w-full border border-gray-300 rounded px-3 py-2 focus:ring-2 focus:ring-primary focus:border-primary"
-          required
         />
       </div>
 
@@ -100,7 +108,6 @@ const PollForm = () => {
               value={choice}
               onChange={(e) => handleChoiceChange(index, e.target.value)}
               className="flex-1 border border-gray-300 rounded px-3 py-2 focus:ring-2 focus:ring-primary focus:border-primary"
-              required
             />
             {choices.length > 1 && (
               <button

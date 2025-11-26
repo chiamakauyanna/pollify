@@ -1,62 +1,59 @@
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useRouter } from "next/router";
 import LoginForm from "./components/LoginForm";
-import { useAuth } from "@/hooks/useAuth";
-import Toast from "@/components/common/Toast";
-import Link from "next/link";
+import { useDispatch, useSelector } from "react-redux";
+import { LoginThunk } from "../../redux/slices/authSlice";
+import { RootState, AppDispatch } from "../../redux/store";
+import Toast from "../../components/common/Toast";
 
 const LoginPage = () => {
-  const { loginAdmin, loginVoter, error, user } = useAuth();
+  const dispatch = useDispatch<AppDispatch>();
   const router = useRouter();
-  const [isAdmin, setIsAdmin] = useState(true);
+  const { loading, error, isAuthenticated } = useSelector(
+    (state: RootState) => state.auth
+  );
 
+  // Redirect if already authenticated
   useEffect(() => {
-    if (user) router.replace("/dashboard");
-  }, [user, router]);
+    if (isAuthenticated) {
+      router.replace("/dashboard/admin");
+    }
+  }, [isAuthenticated, router]);
 
-  const handleToggle = (role: "admin" | "voter") =>
-    setIsAdmin(role === "admin");
+  // Handle form submission
+  const handleLogin = async (data: { username: string; password: string }) => {
+    const result = await dispatch(LoginThunk(data));
+    if (LoginThunk.fulfilled.match(result)) {
+      router.replace("/dashboard/admin");
+    }
+  };
+
+  // While checking auth or redirecting
+  if (isAuthenticated) {
+    return null;
+  }
 
   return (
-    <div className="min-h-screen flex flex-col bg-gray-50">
-      <main className="flex-1 flex flex-col justify-center items-center px-4 sm:px-6 lg:px-8">
-        <div className="w-full max-w-md bg-white p-8 rounded-xl shadow-lg space-y-6">
-          <h1 className="text-2xl font-bold text-center text-gray-800">
-            Welcome Back
-          </h1>
+    <div className="relative h-screen w-full">
+      {/* Background Image */}
+      <div
+        className="absolute inset-0 bg-cover bg-center"
+        style={{ backgroundImage: "url('/images/bg7.jpg')" }}
+      ></div>
 
-          {/* Role toggle */}
-          <div className="flex justify-center gap-2">
-            {["admin", "voter"].map((role) => (
-              <button
-                key={role}
-                onClick={() => handleToggle(role as "admin" | "voter")}
-                className={`px-5 py-2 rounded-lg font-medium transition-colors ${
-                  (isAdmin && role === "admin") ||
-                  (!isAdmin && role === "voter")
-                    ? "bg-primary text-white hover:bg-secondary"
-                    : "bg-gray-200 text-gray-700 hover:bg-gray-300"
-                }`}
-              >
-                {role.charAt(0).toUpperCase() + role.slice(1)}
-              </button>
-            ))}
-          </div>
+      {/* Overlay */}
+      <div className="absolute inset-0 bg-black/50"></div>
 
-          <LoginForm onSubmit={isAdmin ? loginAdmin : loginVoter} />
+      {/* Form Container */}
+      <main className="relative z-10 flex flex-col justify-center items-center h-full px-4">
+        <div className="w-full max-w-lg bg-gray-100/70 p-8 rounded-xl shadow-lg space-y-6">
+          <p className="text-xl md:text-2xl font-semibold text-black px-1">
+            Login
+          </p>
+
+          <LoginForm onSubmit={handleLogin} loading={loading} />
 
           {error && <Toast message={error} type="error" />}
-
-          {/* New here link */}
-          <p className="text-center text-gray-600 text-sm">
-            New here?{" "}
-            <Link
-              href="/auth/register"
-              className="text-primary hover:underline font-medium"
-            >
-              Register
-            </Link>
-          </p>
         </div>
       </main>
     </div>

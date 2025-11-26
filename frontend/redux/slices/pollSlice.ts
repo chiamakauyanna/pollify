@@ -1,217 +1,226 @@
-import { createSlice, createAsyncThunk, PayloadAction } from "@reduxjs/toolkit";
-import pollService, {
-  Poll,
-  PollPayload,
-  ChoicePayload,
-  VotePayload,
-  PollStats,
-  Choice,
-} from "../../services/pollService";
-import { extractErrorMessage } from "./authSlice";
+import { AnyAction, SerializedError } from "@reduxjs/toolkit";
+import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
+import PollService, {
+  CreatePollPayload,
+  VoteLinkPayload,
+} from "@/services/pollService";
 
-// ------ ASYNC THUNKS --------
+// ====== ASYNC THUNKS ======
 
-// POLLS
-export const fetchPolls = createAsyncThunk<Poll[]>(
-  "polls/fetchPolls",
-  async () => {
-    return await pollService.getPolls();
-  }
-);
-
-export const fetchPoll = createAsyncThunk<Poll, string>(
-  "polls/fetchPoll",
-  async (id: string) => {
-    return await pollService.getPoll(id);
-  }
-);
-
-export const createPoll = createAsyncThunk<Poll, PollPayload>(
-  "polls/createPoll",
-  async (data: PollPayload) => {
-    return await pollService.createPoll(data);
-  }
-);
-
-export const updatePoll = createAsyncThunk<
-  Poll,
-  { id: string; data: Partial<PollPayload> }
->("polls/updatePoll", async ({ id, data }) => {
-  return await pollService.updatePoll(id, data);
+// Admin
+export const fetchPolls = createAsyncThunk("polls/fetchAll", async () => {
+  return await PollService.getAll();
 });
 
-export const deletePoll = createAsyncThunk<string, string>(
-  "polls/deletePoll",
-  async (id: string) => {
-    await pollService.deletePoll(id);
-    return id;
-  }
-);
-
-// CHOICES
-export const createChoice = createAsyncThunk<Choice, ChoicePayload>(
-  "polls/createChoice",
-  async (data: ChoicePayload) => {
-    return await pollService.createChoice(data);
-  }
-);
-
-export const deleteChoice = createAsyncThunk<string, string>(
-  "polls/deleteChoice",
-  async (id: string) => {
-    await pollService.deleteChoice(id);
-    return id;
-  }
-);
-
-// VOTING
-export const castVote = createAsyncThunk<PollStats, VotePayload>(
-  "polls/castVote",
-  async (data: VotePayload, { rejectWithValue }) => {
-    try {
-      // 1. Cast the vote
-      await pollService.castVote(data);
-
-      // 2. Fetch updated poll stats
-      const updatedStats = await pollService.getPollStats(data.poll);
-
-      // 3. Return updated stats to the reducer
-      return updatedStats;
-    } catch (err) {
-      // Extract error message and return a rejected action
-      return rejectWithValue(extractErrorMessage(err, "Voting Failed"));
-    }
-  }
-);
-
-// POLL STATS
-export const fetchPollStats = createAsyncThunk<PollStats, string>(
-  "polls/fetchPollStats",
+export const fetchPoll = createAsyncThunk(
+  "polls/fetchOne",
   async (pollId: string) => {
-    return await pollService.getPollStats(pollId);
+    return await PollService.getById(pollId);
   }
 );
 
-// -------------------- SLICE --------------------
+export const createPoll = createAsyncThunk(
+  "polls/create",
+  async (data: CreatePollPayload) => {
+    return await PollService.createPoll(data); // returns { poll, vote_links }
+  }
+);
+
+export const updatePoll = createAsyncThunk(
+  "polls/update",
+  async ({
+    pollId,
+    data,
+  }: {
+    pollId: string;
+    data: Partial<CreatePollPayload>;
+  }) => {
+    return await PollService.updatePoll(pollId, data);
+  }
+);
+
+export const deletePoll = createAsyncThunk(
+  "polls/delete",
+  async (pollId: string) => {
+    await PollService.deletePoll(pollId);
+    return pollId;
+  }
+);
+
+export const generateVoteLink = createAsyncThunk(
+  "polls/generateVoteLink",
+  async ({ pollId, data }: { pollId: string; data: VoteLinkPayload }) => {
+    return await PollService.generateVoteLink(pollId, data); // { link: string }
+  }
+);
+
+// Public
+export const fetchPublicPolls = createAsyncThunk("polls/public", async () => {
+  return await PollService.getPublicPolls();
+});
+
+export const fetchPollResults = createAsyncThunk(
+  "polls/results",
+  async (pollId: string) => {
+    return await PollService.getPollResults(pollId);
+  }
+);
+
+export const submitVote = createAsyncThunk(
+  "polls/submitVote",
+  async (payload: { poll: string; choice: string; votelink: string }) => {
+    return await PollService.submitVote(payload);
+  }
+);
+
+// ========== TYPES ==========
+
+export interface Choice {
+  id: string;
+  text: string;
+  votes_count?: number;
+}
+
+export interface VoteLink {
+  token: string;
+  poll: string;
+  invitee_email: string;
+  invitee_name: string;
+  used: boolean;
+}
+
+export interface Poll {
+  id: string;
+  title: string;
+  description?: string;
+  choices: Choice[];
+  start_at?: string;
+  end_at?: string;
+  is_active: boolean;
+  vote_links: VoteLink[];
+  created_at: string;
+  is_votable: boolean;
+  show_results: boolean;
+}
+
+export interface ResultItem {
+  id: string;
+  text: string;
+  votes_count: number;
+}
+
+export interface Result {
+  poll_id: string;
+  title: string;
+  description: string;
+  results: ResultItem[];
+}
+
 interface PollState {
   polls: Poll[];
-  currentPoll?: Poll;
-  pollStats?: PollStats;
+  currentPoll: Poll | null;
+  publicPolls: Poll[];
+  results: Result | null;
+  generatedLink: string | null;
+  successMessage: string | null;
   loading: boolean;
-  error?: string;
+  error: string | null;
 }
 
 const initialState: PollState = {
   polls: [],
-  currentPoll: undefined,
-  pollStats: undefined,
+  currentPoll: null,
+  publicPolls: [],
+  results: null,
+  generatedLink: null,
+  successMessage: null,
   loading: false,
-  error: undefined,
+  error: null,
 };
+
+// =================== SLICE ===================
 
 const pollSlice = createSlice({
   name: "polls",
   initialState,
   reducers: {
-    clearCurrentPoll(state) {
-      state.currentPoll = undefined;
-      state.pollStats = undefined;
+    clearMessages(state) {
+      state.error = null;
+      state.successMessage = null;
+      state.generatedLink = null;
     },
   },
   extraReducers: (builder) => {
-    // -------------------- POLLS --------------------
+    // ===== Fulfilled Handlers =====
+
+    // Admin
     builder
-      .addCase(fetchPolls.pending, (state) => {
-        state.loading = true;
-        state.error = undefined;
-      })
-      .addCase(fetchPolls.fulfilled, (state, action: PayloadAction<Poll[]>) => {
+      .addCase(fetchPolls.fulfilled, (state, action) => {
         state.loading = false;
         state.polls = action.payload;
       })
-      .addCase(fetchPolls.rejected, (state, action) => {
+      .addCase(fetchPoll.fulfilled, (state, action) => {
         state.loading = false;
-        state.error = action.error.message;
-      })
-      .addCase(fetchPoll.fulfilled, (state, action: PayloadAction<Poll>) => {
         state.currentPoll = action.payload;
       })
-      .addCase(createPoll.fulfilled, (state, action: PayloadAction<Poll>) => {
-        state.polls.push(action.payload);
+      .addCase(createPoll.fulfilled, (state, action) => {
+        state.loading = false;
+        state.polls.unshift(action.payload.poll);
+        state.successMessage = "Poll created";
       })
-      .addCase(updatePoll.fulfilled, (state, action: PayloadAction<Poll>) => {
-        const index = state.polls.findIndex((p) => p.id === action.payload.id);
-        if (index !== -1) state.polls[index] = action.payload;
-        if (state.currentPoll?.id === action.payload.id)
-          state.currentPoll = action.payload;
+      .addCase(updatePoll.fulfilled, (state, action) => {
+        state.loading = false;
+        state.currentPoll = action.payload;
+        state.successMessage = "Poll updated";
       })
-      .addCase(deletePoll.fulfilled, (state, action: PayloadAction<string>) => {
+      .addCase(deletePoll.fulfilled, (state, action) => {
+        state.loading = false;
         state.polls = state.polls.filter((p) => p.id !== action.payload);
-        if (state.currentPoll?.id === action.payload)
-          state.currentPoll = undefined;
+        state.successMessage = "Poll deleted";
+      })
+      .addCase(generateVoteLink.fulfilled, (state, action) => {
+        state.loading = false;
+        state.generatedLink = action.payload.link; // expecting { link: string } from service
+        state.successMessage = "Vote link generated";
       });
 
-    // -------------------- CHOICES --------------------
+    // Public
     builder
-      .addCase(
-        createChoice.fulfilled,
-        (state, action: PayloadAction<Choice>) => {
-          if (state.currentPoll) state.currentPoll.choices.push(action.payload);
-        }
-      )
-      .addCase(
-        deleteChoice.fulfilled,
-        (state, action: PayloadAction<string>) => {
-          if (state.currentPoll)
-            state.currentPoll.choices = state.currentPoll.choices.filter(
-              (c) => c.id !== action.payload
-            );
-        }
-      );
+      .addCase(fetchPublicPolls.fulfilled, (state, action) => {
+        state.loading = false;
+        state.publicPolls = action.payload;
+      })
+      .addCase(fetchPollResults.fulfilled, (state, action) => {
+        state.loading = false;
+        state.results = action.payload;
+      })
+      .addCase(submitVote.fulfilled, (state) => {
+        state.loading = false;
+        state.successMessage = "Vote submitted!";
+      });
 
-    // -------------------- POLL STATS --------------------
-    builder.addCase(
-      fetchPollStats.fulfilled,
-      (state, action: PayloadAction<PollStats>) => {
-        state.pollStats = action.payload;
+      
+    // ===== Unified Pending Handler =====
+    builder.addMatcher(
+      (action) =>
+        action.type.startsWith("polls/") && action.type.endsWith("/pending"),
+      (state) => {
+        state.loading = true;
+        state.error = null;
       }
     );
 
-    // -------------------- VOTING --------------------
-    builder.addCase(castVote.fulfilled, (state, action) => {
-      const votePayload = action.meta.arg as VotePayload;
-      if (!votePayload) return;
-
-      const votedChoiceId = votePayload.choice;
-
-      // Update pollStats
-      if (state.pollStats) {
-        const choice = state.pollStats.choices.find(
-          (c) => c.id === votedChoiceId
-        );
-        if (choice) {
-          choice.votes_count = (choice.votes_count ?? 0) + 1;
-          state.pollStats.total_votes += 1;
-        }
+    // ===== Unified Rejected Handler =====
+    builder.addMatcher(
+      (action: AnyAction): action is AnyAction & { error: SerializedError } =>
+        action.type.startsWith("polls/") && action.type.endsWith("/rejected"),
+      (state, action) => {
+        state.loading = false;
+        state.error = action.error?.message || "Error";
       }
-
-      // Update currentPoll.choices using action.payload
-      if (state.currentPoll && action.payload) {
-        state.currentPoll.choices = state.currentPoll.choices.map((c) => {
-          const updatedChoice = action.payload.choices.find(
-            (uc) => uc.id === c.id
-          );
-          return updatedChoice
-            ? { ...c, votes_count: updatedChoice.votes_count }
-            : c;
-        });
-      }
-
-      // Optionally, sync pollStats completely with the returned payload
-      state.pollStats = action.payload;
-    });
+    );
   },
 });
 
-export const { clearCurrentPoll } = pollSlice.actions;
+export const { clearMessages } = pollSlice.actions;
 export default pollSlice.reducer;

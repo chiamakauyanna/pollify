@@ -1,8 +1,8 @@
 import { useEffect } from "react";
-import { usePolls } from "@/hooks/usePolls";
+import { usePolls } from "../../hooks/usePolls";
 import PollItem from "./components/PollItem";
-import Loader from "@/components/common/Loader";
-import Toast from "@/components/common/Toast";
+import Loader from "../../components/common/Loader";
+import Toast from "../../components/common/Toast";
 
 const PollsPage = () => {
   const { polls, loading, error, loadPolls } = usePolls();

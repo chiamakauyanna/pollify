@@ -1,9 +1,9 @@
 import { useEffect } from "react";
 import { useRouter } from "next/router";
-import { usePolls } from "@/hooks/usePolls";
-import PollStats from "./components/PollStats";
-import Loader from "@/components/common/Loader";
-import Toast from "@/components/common/Toast";
+import PollStats from "./components/PollResults";
+import Loader from "../../components/common/Loader";
+import Toast from "../../components/common/Toast";
+import { usePolls } from "../../hooks/usePolls";
 
 const PollDetailPage = () => {
   const router = useRouter();
@@ -16,6 +16,7 @@ const PollDetailPage = () => {
 
   const handleVote = (choiceId: string) => {
     if (!currentPoll) return;
+    if (!currentPoll.is_votable) return alert("Voting for this poll is closed.");
     vote({ poll: currentPoll.id, choice: choiceId });
   };
 
@@ -32,6 +33,10 @@ const PollDetailPage = () => {
             )}
 
             <PollStats poll={currentPoll} stats={pollStats} onVote={handleVote} />
+
+            {!currentPoll.is_votable && (
+              <p className="mt-4 text-gray-500 font-medium">Voting for this poll is closed.</p>
+            )}
           </div>
         )}
       </main>

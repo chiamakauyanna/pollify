@@ -1,67 +1,83 @@
-import React, { useState } from "react";
-import { Poll, Choice } from "@/services/pollService";
-import { usePolls } from "@/hooks/usePolls";
-import { useAuth } from "@/hooks/useAuth";
+import { useState } from "react";
+import { useDispatch } from "react-redux";
+import { submitVote, fetchPollResults } from "@/redux/slices/pollSlice";
+import { AppDispatch } from "@/redux/store";
 
-interface PollItemProps {
-  poll: Poll;
+interface Choice {
+  id: string;
+  text: string;
+  votes_count?: number;
 }
 
-const PollItem: React.FC<PollItemProps> = ({ poll }) => {
-  const { user } = useAuth();
-  const { vote, loadStats, pollStats } = usePolls();
-  const [selectedChoice, setSelectedChoice] = useState<string>("");
+interface Poll {
+  id: string;
+  title: string;
+  description?: string;
+  choices: Choice[];
+  vote_links?: { token: string; used: boolean }[];
+  is_votable: boolean;
+}
 
-  const isVoter = user?.role === "voter";
-  const isVotable = poll.is_votable;
+interface Props {
+  poll: Poll;
+  onVoteSuccess?: () => void;
+}
+
+const PollItem: React.FC<Props> = ({ poll, onVoteSuccess }) => {
+  const dispatch = useDispatch<AppDispatch>();
+  const [selectedChoice, setSelectedChoice] = useState<string>("");
+  const [voting, setVoting] = useState(false);
+
+  const votelink = poll.vote_links?.find((vl) => !vl.used)?.token;
 
   const handleVote = async () => {
-    if (!selectedChoice) return alert("Please select a choice");
+    if (!poll.is_votable) return alert("Voting closed");
+    if (!selectedChoice) return alert("Select a choice");
+    if (!votelink) return alert("No vote link available");
 
     try {
-      await vote({ poll: poll.id, choice: selectedChoice });
-      await loadStats(poll.id);
+      setVoting(true);
+      await dispatch(submitVote({ poll: poll.id, choice: selectedChoice, votelink }));
+      await dispatch(fetchPollResults(poll.id));
+      if (onVoteSuccess) onVoteSuccess();
       setSelectedChoice("");
     } catch (err) {
-      console.error("Voting failed:", err);
+      console.error(err);
+    } finally {
+      setVoting(false);
     }
   };
 
   return (
-    <div className="bg-white shadow-lg rounded-xl p-6 mb-4 hover:shadow-xl transition">
-      <h2 className="text-xl font-bold mb-2">{poll.title}</h2>
-      {poll.description && <p className="mb-4 text-gray-700">{poll.description}</p>}
+    <div className="bg-white p-4 rounded shadow">
+      <h2 className="font-bold">{poll.title}</h2>
+      {poll.description && <p className="text-gray-600">{poll.description}</p>}
 
-      {isVoter && isVotable ? (
-        <div className="space-y-2">
-          {poll.choices.map((choice: Choice) => {
-            const votesCount = pollStats?.choices.find((c) => c.id === choice.id)?.votes_count;
-            return (
-              <label key={choice.id} className="flex items-center gap-3 cursor-pointer">
-                <input
-                  type="radio"
-                  name={`poll-${poll.id}`}
-                  value={choice.id}
-                  checked={selectedChoice === choice.id}
-                  onChange={(e) => setSelectedChoice(e.target.value)}
-                  className="accent-primary"
-                />
-                <span className="flex-1">{choice.text}</span>
-                {votesCount !== undefined && (
-                  <span className="text-gray-500 text-sm">({votesCount})</span>
-                )}
-              </label>
-            );
-          })}
+      {poll.is_votable ? (
+        <div className="mt-2 flex flex-col gap-2">
+          {poll.choices.map((choice) => (
+            <label key={choice.id} className="flex items-center gap-2">
+              <input
+                type="radio"
+                name={`poll-${poll.id}`}
+                value={choice.id}
+                checked={selectedChoice === choice.id}
+                onChange={(e) => setSelectedChoice(e.target.value)}
+              />
+              <span>{choice.text}</span>
+              {choice.votes_count !== undefined && <span>({choice.votes_count})</span>}
+            </label>
+          ))}
           <button
             onClick={handleVote}
-            className="button-primary mt-2 px-4 py-2 rounded-lg hover:bg-secondary transition"
+            disabled={voting || !selectedChoice}
+            className="mt-2 px-4 py-1 bg-primary text-white rounded disabled:opacity-50"
           >
-            Vote
+            {voting ? "Voting..." : "Vote"}
           </button>
         </div>
       ) : (
-        <p className="text-gray-500">{isVoter ? "Voting closed" : "You cannot vote on this poll"}</p>
+        <p className="text-gray-500 mt-2">Voting closed</p>
       )}
     </div>
   );
