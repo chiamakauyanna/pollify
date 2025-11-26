@@ -1,5 +1,5 @@
 import VoterLayout from "@/components/layouts/app/VoterLayout";
-import VoterPolls from "@/pages/polls/components/VotersPolls";
+import VoterPolls from "@/components/polls/VotersPolls";
 
 export default function VoterResultsPage() {
   return (

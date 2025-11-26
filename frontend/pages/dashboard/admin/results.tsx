@@ -1,5 +1,5 @@
 import AppLayout from "@/components/layouts/app/AppLayout";
-import VoterPolls from "@/pages/polls/components/VotersPolls";
+import VoterPolls from "@/components/polls/VotersPolls";
 
 export default function AdminResultsPage() {
   return (

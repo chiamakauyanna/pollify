@@ -17,10 +17,6 @@ export interface SidebarProps {
   toggleSidebar?: () => void;
 }
 
-export interface HeaderProps {
-  toggleSidebar: () => void;
-}
-
 export interface PollOption {
   id?: string;
   text?: string;

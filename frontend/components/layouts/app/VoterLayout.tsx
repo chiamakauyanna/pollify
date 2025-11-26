@@ -1,22 +1,17 @@
 import { useState } from "react";
 import { LayoutProps } from "../../../Interfaces/interface";
-import Header from "./Header";
+import VoterHeader from "./VoterHeader";
 import VoterSidebar from "./VoterSidebar";
 
 export default function VoterLayout({ children }: LayoutProps) {
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
-
   return (
     <div className="flex h-screen">
       {/* Sidebar */}
-      <VoterSidebar
-        isOpen={isSidebarOpen}
-        toggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)}
-      />
+      <VoterSidebar />
       {/* Main Content */}
       <div className="flex-1 flex flex-col bg-background text-text">
         {/* Header */}
-        <Header toggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)} />
+        <VoterHeader />
 
         {/* Page Content */}
         <main className="p-6">{children}</main>

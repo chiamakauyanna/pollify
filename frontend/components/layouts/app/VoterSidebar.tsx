@@ -3,7 +3,7 @@ import { useRouter } from "next/router";
 import { useSelector, useDispatch } from "react-redux";
 import { selectSidebarState, toggleSidebar } from "@/redux/slices/sidebarSlice";
 import { IoMdClose } from "react-icons/io";
-import { MdPoll, MdBarChart } from "react-icons/md";
+import { MdPoll } from "react-icons/md";
 import Logo from "../../common/Logo";
 
 const VoterSidebar: React.FC = () => {
@@ -14,7 +14,6 @@ const VoterSidebar: React.FC = () => {
   // Voter menu items only
   const menuItems = [
     { name: "Active Polls", href: "/dashboard/voter", icon: <MdPoll /> },
-    { name: "Results", href: "/dashboard/voter/results", icon: <MdBarChart /> },
   ];
 
   return (

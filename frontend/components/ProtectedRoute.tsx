@@ -18,7 +18,7 @@ const ProtectedRoute: React.FC<Props> = ({ children }) => {
   }, [isAuthenticated, router]);
 
   if (!isAuthenticated) {
-    return null; // optional: add a spinner
+    return null; 
   }
 
   return <>{children}</>;

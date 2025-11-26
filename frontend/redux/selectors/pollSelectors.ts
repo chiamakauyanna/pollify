@@ -1,11 +1,13 @@
-// src/store/pollSelectors.ts
 import { RootState } from "../store"; 
 
 // ---- Polls ----
 export const selectPolls = (state: RootState) => state.polls.polls;
 export const selectCurrentPoll = (state: RootState) => state.polls.currentPoll;
 export const selectPublicPolls = (state: RootState) => state.polls.publicPolls;
+export const selectClosedPolls = (state: RootState) => state.polls.closedPolls;
 export const selectPollResults = (state: RootState) => state.polls.results;
+export const selectPollStats = (state: RootState) => state.polls.pollStats;
+export const selectAdminAnalytics = (state: RootState) => state.polls.adminAnalytics;
 
 // ---- UI / Feedback ----
 export const selectPollLoading = (state: RootState) => state.polls.loading;

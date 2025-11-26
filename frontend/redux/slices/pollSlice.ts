@@ -1,9 +1,6 @@
 import { AnyAction, SerializedError } from "@reduxjs/toolkit";
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
-import PollService, {
-  CreatePollPayload,
-  VoteLinkPayload,
-} from "@/services/pollService";
+import PollService, { CreatePollPayload } from "@/services/pollService";
 
 // ====== ASYNC THUNKS ======
 
@@ -22,7 +19,7 @@ export const fetchPoll = createAsyncThunk(
 export const createPoll = createAsyncThunk(
   "polls/create",
   async (data: CreatePollPayload) => {
-    return await PollService.createPoll(data); // returns { poll, vote_links }
+    return await PollService.createPoll(data); 
   }
 );
 
@@ -49,8 +46,8 @@ export const deletePoll = createAsyncThunk(
 
 export const generateVoteLink = createAsyncThunk(
   "polls/generateVoteLink",
-  async ({ pollId, data }: { pollId: string; data: VoteLinkPayload }) => {
-    return await PollService.generateVoteLink(pollId, data); // { link: string }
+  async ({ pollId }: { pollId: string }) => {
+    return await PollService.generateVoteLink(pollId);
   }
 );
 
@@ -63,6 +60,34 @@ export const fetchPollResults = createAsyncThunk(
   "polls/results",
   async (pollId: string) => {
     return await PollService.getPollResults(pollId);
+  }
+);
+
+export const fetchPublicPollById = createAsyncThunk(
+  "polls/publicById",
+  async (pollId: string) => {
+    return await PollService.getPublicPollById(pollId);
+  }
+);
+
+export const fetchPublicClosedPolls = createAsyncThunk(
+  "polls/publicClosed",
+  async () => {
+    return await PollService.getPublicClosedPolls();
+  }
+);
+
+export const fetchPollStats = createAsyncThunk(
+  "polls/stats",
+  async (pollId: string) => {
+    return await PollService.getPollStats(pollId);
+  }
+);
+
+export const fetchAdminAnalytics = createAsyncThunk(
+  "polls/adminAnalytics",
+  async () => {
+    return await PollService.getAdminAnalytics();
   }
 );
 
@@ -120,6 +145,10 @@ interface PollState {
   polls: Poll[];
   currentPoll: Poll | null;
   publicPolls: Poll[];
+  closedPolls: Poll[];
+
+  pollStats: any;
+  adminAnalytics: any;
   results: Result | null;
   generatedLink: string | null;
   successMessage: string | null;
@@ -129,9 +158,12 @@ interface PollState {
 
 const initialState: PollState = {
   polls: [],
-  currentPoll: null,
   publicPolls: [],
+  closedPolls: [],
+  currentPoll: null,
   results: null,
+  pollStats: null,
+  adminAnalytics: null,
   generatedLink: null,
   successMessage: null,
   loading: false,
@@ -180,7 +212,7 @@ const pollSlice = createSlice({
       })
       .addCase(generateVoteLink.fulfilled, (state, action) => {
         state.loading = false;
-        state.generatedLink = action.payload.link; // expecting { link: string } from service
+        state.generatedLink = action.payload.link;
         state.successMessage = "Vote link generated";
       });
 
@@ -194,12 +226,31 @@ const pollSlice = createSlice({
         state.loading = false;
         state.results = action.payload;
       })
-      .addCase(submitVote.fulfilled, (state) => {
+      .addCase(submitVote.fulfilled, (state, action) => {
         state.loading = false;
+        state.results = action.payload;
         state.successMessage = "Vote submitted!";
+      })
+      .addCase(fetchPublicPollById.fulfilled, (state, action) => {
+        state.loading = false;
+        state.currentPoll = action.payload;
+      })
+
+      .addCase(fetchPublicClosedPolls.fulfilled, (state, action) => {
+        state.loading = false;
+        state.closedPolls = action.payload;
+      })
+
+      .addCase(fetchPollStats.fulfilled, (state, action) => {
+        state.loading = false;
+        state.pollStats = action.payload;
+      })
+
+      .addCase(fetchAdminAnalytics.fulfilled, (state, action) => {
+        state.loading = false;
+        state.adminAnalytics = action.payload;
       });
 
-      
     // ===== Unified Pending Handler =====
     builder.addMatcher(
       (action) =>
