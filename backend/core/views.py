@@ -30,44 +30,6 @@ class PollViewSet(viewsets.ModelViewSet):
     serializer_class = PollAdminSerializer
     permission_classes = [IsAdminUser]
 
-    def create(self, request, *args, **kwargs):
-        data = request.data
-        choices_data = data.pop("choices", [])
-        vote_links_data = data.pop("vote_links", [])
-
-        poll = Poll.objects.create(
-            title=data.get("title"),
-            description=data.get("description", ""),
-            start_at=data.get("start_at"),
-            end_at=data.get("end_at"),
-            is_active=data.get("is_active", True),
-            created_by=request.user
-        )
-
-        # Create choices (minimal validation)
-        for choice in choices_data:
-            text = choice.get("text")
-            if text:
-                Choice.objects.create(poll=poll, text=text)
-
-        vote_links = []
-        for v in vote_links_data:
-            token = uuid.uuid4()
-            vl = VoteLink.objects.create(
-                poll=poll,
-                token=token,
-                invitee_email=v.get("invitee_email"),
-                invitee_name=v.get("invitee_name")
-            )
-            vote_links.append(vl)
-
-        serializer = PollAdminSerializer(poll)
-        vote_links_serializer = VoteLinkSerializer(vote_links, many=True)
-        return Response(
-            {"poll": serializer.data, "vote_links": vote_links_serializer.data},
-            status=status.HTTP_201_CREATED
-        )
-
     @action(detail=True, methods=["post"], url_path="generate-vote-link", permission_classes=[IsAdminUser])
     def generate_vote_link(self, request, pk=None):
         poll = self.get_object()

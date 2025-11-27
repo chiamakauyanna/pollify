@@ -1,10 +1,10 @@
 import { useState } from "react";
 import { useDispatch } from "react-redux";
-import { createPoll, fetchPolls } from "@/redux/slices/pollSlice";
+import { createPoll } from "@/redux/slices/pollSlice";
 import { AppDispatch } from "@/redux/store";
 
 interface PollFormProps {
-  onPollCreated?: () => void; // callback to notify parent
+  onPollCreated?: () => void; 
 }
 
 const PollForm: React.FC<PollFormProps> = ({ onPollCreated }) => {
@@ -15,6 +15,7 @@ const PollForm: React.FC<PollFormProps> = ({ onPollCreated }) => {
   const [startAt, setStartAt] = useState("");
   const [endAt, setEndAt] = useState("");
   const [choices, setChoices] = useState<string[]>([""]);
+  const [loading, setLoading] = useState(false);
 
   const handleChoiceChange = (index: number, value: string) => {
     const newChoices = [...choices];
@@ -28,11 +29,14 @@ const PollForm: React.FC<PollFormProps> = ({ onPollCreated }) => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
     if (!title.trim()) return alert("Title is required");
     if (choices.some((c) => !c.trim())) return alert("All choices must be filled");
 
     try {
-      await dispatch(
+      setLoading(true);
+
+      const result = await dispatch(
         createPoll({
           title,
           description,
@@ -40,9 +44,9 @@ const PollForm: React.FC<PollFormProps> = ({ onPollCreated }) => {
           end_at: endAt || undefined,
           choices: choices.map((text) => ({ text })),
         })
-      ).unwrap();
+      ).unwrap(); // throws if error
 
-      // Notify parent dashboard to refresh polls
+      // Notify parent to refresh poll list
       if (onPollCreated) onPollCreated();
 
       // Reset form
@@ -51,13 +55,19 @@ const PollForm: React.FC<PollFormProps> = ({ onPollCreated }) => {
       setStartAt("");
       setEndAt("");
       setChoices([""]);
+
+      alert("Poll created successfully!");
     } catch (err) {
       console.error("Failed to create poll:", err);
+      alert("Failed to create poll. Check console for details.");
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
     <form onSubmit={handleSubmit} className="bg-white p-6 rounded-xl shadow-lg space-y-4">
+      {/* Title */}
       <div>
         <label className="block font-semibold mb-1">Title</label>
         <input
@@ -65,9 +75,11 @@ const PollForm: React.FC<PollFormProps> = ({ onPollCreated }) => {
           value={title}
           onChange={(e) => setTitle(e.target.value)}
           className="w-full border border-gray-300 rounded px-3 py-2 focus:ring-2 focus:ring-primary focus:border-primary"
+          required
         />
       </div>
 
+      {/* Description */}
       <div>
         <label className="block font-semibold mb-1">Description</label>
         <textarea
@@ -78,6 +90,7 @@ const PollForm: React.FC<PollFormProps> = ({ onPollCreated }) => {
         />
       </div>
 
+      {/* Start & End */}
       <div className="grid grid-cols-2 gap-4">
         <div>
           <label className="block font-semibold mb-1">Start At</label>
@@ -99,6 +112,7 @@ const PollForm: React.FC<PollFormProps> = ({ onPollCreated }) => {
         </div>
       </div>
 
+      {/* Choices */}
       <div>
         <label className="block font-semibold mb-1">Choices</label>
         {choices.map((choice, index) => (
@@ -108,6 +122,7 @@ const PollForm: React.FC<PollFormProps> = ({ onPollCreated }) => {
               value={choice}
               onChange={(e) => handleChoiceChange(index, e.target.value)}
               className="flex-1 border border-gray-300 rounded px-3 py-2 focus:ring-2 focus:ring-primary focus:border-primary"
+              required
             />
             {choices.length > 1 && (
               <button
@@ -129,11 +144,15 @@ const PollForm: React.FC<PollFormProps> = ({ onPollCreated }) => {
         </button>
       </div>
 
+      {/* Submit */}
       <button
         type="submit"
-        className="button-primary mt-4 w-full py-2 text-lg hover:bg-secondary transition"
+        disabled={loading}
+        className={`mt-4 w-full py-2 text-lg rounded text-white ${
+          loading ? "bg-gray-400 cursor-not-allowed" : "bg-primary hover:bg-secondary"
+        } transition`}
       >
-        Create Poll
+        {loading ? "Creating..." : "Create Poll"}
       </button>
     </form>
   );

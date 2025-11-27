@@ -38,7 +38,10 @@ class Poll(models.Model):
 
     @property
     def show_results(self):
-        return self.end_at and timezone.now() > self.end_at
+        if not self.end_at:
+            return False
+        return timezone.now() > self.end_at
+
 
 
 class Choice(models.Model):

@@ -212,7 +212,7 @@ const pollSlice = createSlice({
       })
       .addCase(generateVoteLink.fulfilled, (state, action) => {
         state.loading = false;
-        state.generatedLink = action.payload.link;
+        state.generatedLink = action.payload;
         state.successMessage = "Vote link generated";
       });
 

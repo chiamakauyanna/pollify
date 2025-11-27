@@ -4,7 +4,7 @@ from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
 
 class ChoiceSerializer(serializers.ModelSerializer):
-    votes_count = serializers.SerializerMethodField()
+    votes_count = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = Choice
@@ -23,7 +23,7 @@ class VoteLinkSerializer(serializers.ModelSerializer):
 
 # Admin-facing poll serializer (includes vote links)
 class PollAdminSerializer(serializers.ModelSerializer):
-    choices = ChoiceSerializer(many=True, read_only=True)
+    choices = ChoiceSerializer(many=True)
     vote_links = VoteLinkSerializer(many=True, read_only=True)
     is_votable = serializers.ReadOnlyField()
     show_results = serializers.ReadOnlyField()
@@ -43,6 +43,32 @@ class PollAdminSerializer(serializers.ModelSerializer):
             "show_results",
             "created_at",
         ]
+        read_only_fields = ["id", "created_at"]
+
+    def create(self, validated_data):
+        choices_data = validated_data.pop("choices", [])
+        poll = Poll.objects.create(**validated_data)
+
+        for choice in choices_data:
+            Choice.objects.create(poll=poll, text=choice["text"])
+
+        return poll
+
+    def update(self, instance, validated_data):
+        choices_data = validated_data.pop("choices", None)
+
+        # update poll fields
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+        instance.save()
+
+        # replace choices (not append)
+        if choices_data is not None:
+            instance.choices.all().delete()
+            for choice in choices_data:
+                Choice.objects.create(poll=instance, text=choice["text"])
+
+        return instance
 
 
 # Public-facing poll serializer (hide vote links)

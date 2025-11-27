@@ -31,7 +31,7 @@ const AdminPollManagement = () => {
   const handleGenerateLink = async (pollId: string) => {
     try {
       const token = await dispatch(generateVoteLink({ pollId })).unwrap();
-      alert(`Vote link generated: ${token}`);
+      alert(`Vote link generated: ${token.token}`);  
     } catch (err) {
       console.error("Failed to generate vote link:", err);
     }
