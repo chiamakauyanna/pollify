@@ -11,11 +11,6 @@ const Header = () => {
             <Link href="/polls/create">
               <Button className="button-primary py-2 px-4 text-sm">Create Poll</Button>
             </Link>
-            <Button
-              className="button-secondary py-2 px-4 text-sm"
-            >
-              Logout
-            </Button>
       </div>
     </div>
   );

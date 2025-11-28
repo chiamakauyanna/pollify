@@ -1,7 +1,7 @@
 const Steps = () => {
   return (
     <div className="flex justify-center">
-      <ul className="bg-primary grid lg:grid-cols-3 md:grid-cols-2 grid-cols-1 lg:gap-2 md:gap-2 gap-6 px-6 py-12 absolute lg:-bottom-15 md:-bottom-15 -bottom-40 lg:mx-32 md:mx-20 mx-16 lg:text-left md:text-left text-center items-center rounded-3xl">
+      <ul className="bg-primary grid lg:grid-cols-3 md:grid-cols-2 grid-cols-1 lg:gap-2 md:gap-2 gap-6 px-6 py-12 lg:mx-32 md:mx-20 mx-16 text-center items-center rounded-3xl">
         <div>
           <p className="lg:text-lg md:text-base text-sm uppercase text-black font-semibold">
             Create Poll

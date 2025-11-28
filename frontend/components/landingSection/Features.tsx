@@ -1,13 +1,10 @@
 import Image from "next/image";
-import secure from "@/assets/secure.svg";
-import results from "@/assets/results.svg";
-import accessible from "@/assets/accessible.svg";
 
 const Features = () => {
   return (
     <div className="min-h-screen flex flex-col justify-center lg:mx-32 md:mx-20 mx-10 lg:my-20 md:my-20 mt-64 mb-20">
       <div>
-        <h2 className="lg:text-2xl md:text-1xl text-xl text-center">
+        <h2 className="lg:text-3xl md:text-2xl text-1xl text-center font-bold">
           Our Features
         </h2>
         <p className="mt-6 text-center">
@@ -17,12 +14,14 @@ const Features = () => {
         </p>
       </div>
       <div className="mt-24">
-        <ul className="grid lg:grid-cols-3 md:grid-cols-2 grid-cols-1 gap-4 px-6 pb-10 md:items-center lg:items-start">
+        <ul className="grid lg:grid-cols-3 md:grid-cols-2 grid-cols-1 gap-4 px-6 pb-10 md:items-center">
           <div>
             <Image
               className="mx-auto py-4"
-              src={secure}
+              src="/images/secure.svg"
               alt="animated image signifying secure"
+              width={300}
+              height={300}
             />
             <h3 className="font-bold text-center">Secure & Reliable</h3>
             <p className="text-sm text-center">
@@ -33,9 +32,12 @@ const Features = () => {
           <div>
             <Image
               className="mx-auto py-4"
-              src={results}
+              src="/images/results.svg"
               alt="animated image signifying online results"
+              width={300}
+              height={300}
             />
+
             <h3 className="font-bold text-center">Real-Time Results</h3>
             <p className="text-sm text-center">
               Watch votes update instantly with dynamic visualizations.
@@ -44,8 +46,10 @@ const Features = () => {
           <div className="col-span-1 md:col-span-2 lg:col-span-1">
             <Image
               className="mx-auto py-4"
-              src={accessible}
+              src="/images/accessible.svg"
               alt="animated image signifying accessibility acreoss multiple devices"
+              width={250}
+              height={250}
             />
             <h3 className="font-bold text-center">Accessible Anywhere</h3>
             <p className="text-sm text-center">
