@@ -92,6 +92,14 @@ export const fetchAdminAnalytics = createAsyncThunk(
   }
 );
 
+// Public - fetch poll by token
+export const fetchPollByToken = createAsyncThunk(
+  "polls/fetchByToken",
+  async (token: string) => {
+    return await PollService.getPollByToken(token);
+  }
+);
+
 export const submitVote = createAsyncThunk(
   "polls/submitVote",
   async (payload: { poll: string; choice: string; votelink: string }) => {
@@ -178,20 +186,21 @@ const pollSlice = createSlice({
         state.loading = false;
         state.currentPoll = action.payload;
       })
-
       .addCase(fetchPublicClosedPolls.fulfilled, (state, action) => {
         state.loading = false;
         state.closedPolls = action.payload;
       })
-
       .addCase(fetchPollStats.fulfilled, (state, action) => {
         state.loading = false;
         state.pollStats = action.payload;
       })
-
       .addCase(fetchAdminAnalytics.fulfilled, (state, action) => {
         state.loading = false;
         state.adminAnalytics = action.payload;
+      })
+      .addCase(fetchPollByToken.fulfilled, (state, action) => {
+        state.loading = false;
+        state.currentPoll = action.payload;
       });
 
     // ===== Unified Pending Handler =====

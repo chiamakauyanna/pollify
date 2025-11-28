@@ -23,7 +23,7 @@ export default function Home() {
               </p>
             </div>
             <div className="text-center md:text-left lg:text-left">
-              <Link href="/dashboard/admin">
+              <Link href="/dashboard">
                 <Button className="button-primary py-3 px-8 mt-4 font-medium">
                   Get Started
                 </Button>

@@ -5,30 +5,25 @@ import Loader from "@/components/common/Loader";
 import Toast from "@/components/common/Toast";
 import {
   fetchPolls,
-  fetchPollStats,
   fetchAdminAnalytics,
 } from "@/redux/slices/pollSlice";
 import {
   selectPolls,
-  selectPollStats,
   selectAdminAnalytics,
   selectPollLoading,
   selectPollError,
 } from "@/redux/selectors/pollSelectors";
 import { AppDispatch } from "@/redux/store";
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
 
 export default function AdminDashboard() {
   const dispatch = useDispatch<AppDispatch>();
   const polls = useSelector(selectPolls);
-  const pollStats = useSelector(selectPollStats);
   const adminAnalytics = useSelector(selectAdminAnalytics);
   const loading = useSelector(selectPollLoading);
   const error = useSelector(selectPollError);
 
   useEffect(() => {
     dispatch(fetchPolls());
-    dispatch(fetchPollStats("all"));
     dispatch(fetchAdminAnalytics());
   }, [dispatch]);
 
@@ -54,52 +49,6 @@ export default function AdminDashboard() {
             <h2 className="text-lg font-semibold">Total Votes</h2>
             <p className="text-2xl">{adminAnalytics?.total_votes || 0}</p>
           </div>
-        </div>
-
-        {/* Poll Stats Table */}
-        <div className="bg-white p-4 rounded shadow">
-          <h2 className="text-xl font-bold mb-2">Poll Stats</h2>
-          {pollStats?.length ? (
-            <div className="overflow-x-auto">
-              <table className="min-w-full">
-                <thead className="bg-gray-100">
-                  <tr>
-                    <th className="p-2 text-left">Poll</th>
-                    <th className="p-2 text-left">Total Votes</th>
-                    <th className="p-2 text-left">Active</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {pollStats.map((stat: any) => (
-                    <tr key={stat.poll_id} className="border-b">
-                      <td className="p-2">{stat.title}</td>
-                      <td className="p-2">{stat.total_votes}</td>
-                      <td className="p-2">{stat.is_active ? "Yes" : "No"}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          ) : (
-            <p>No stats available.</p>
-          )}
-        </div>
-
-        {/* Votes Analytics Chart */}
-        <div className="bg-white p-4 rounded shadow">
-          <h2 className="text-xl font-bold mb-2">Votes Analytics</h2>
-          {pollStats?.length ? (
-            <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={pollStats}>
-                <XAxis dataKey="title" />
-                <YAxis />
-                <Tooltip />
-                <Bar dataKey="total_votes" fill="#4f46e5" />
-              </BarChart>
-            </ResponsiveContainer>
-          ) : (
-            <p>No data for chart.</p>
-          )}
         </div>
 
         {/* Admin Overview */}

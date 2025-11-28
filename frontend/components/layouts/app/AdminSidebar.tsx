@@ -4,7 +4,11 @@ import { useDispatch, useSelector } from "react-redux";
 import { selectSidebarState, toggleSidebar } from "@/redux/slices/sidebarSlice";
 import Logo from "../../common/Logo";
 import { IoMdClose } from "react-icons/io";
-import { MdDashboard, MdAddCircle, MdListAlt, MdBarChart } from "react-icons/md";
+import {
+  MdDashboard,
+  MdAddCircle,
+  MdListAlt,
+} from "react-icons/md";
 
 const AdminSidebar: React.FC = () => {
   const isOpen = useSelector(selectSidebarState);
@@ -12,12 +16,11 @@ const AdminSidebar: React.FC = () => {
   const router = useRouter();
 
   // menu items
-  const menuItems =  [
-        { name: "Admin Overview", href: "/dashboard/admin", icon: <MdDashboard /> },
-        { name: "Create Poll", href: "/dashboard/admin/create", icon: <MdAddCircle /> },
-        { name: "Manage Polls", href: "/dashboard/admin/polls", icon: <MdListAlt /> },
-        { name: "Poll Results", href: "/dashboard/admin/results", icon: <MdBarChart /> },
-      ]
+  const menuItems = [
+    { name: "Admin Overview", href: "/dashboard", icon: <MdDashboard /> },
+    { name: "Create Poll", href: "/dashboard/create", icon: <MdAddCircle /> },
+    { name: "Polls", href: "/dashboard/polls", icon: <MdListAlt /> },
+  ];
 
   return (
     <aside

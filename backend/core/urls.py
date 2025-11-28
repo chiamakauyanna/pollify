@@ -11,6 +11,7 @@ from .views import (
     AdminAnalyticsView,
     PollStatsView,
     PublicClosedPollsView,
+    PollByTokenView,
 )
 
 router = DefaultRouter()
@@ -27,6 +28,7 @@ urlpatterns = [
     path("public-polls/<uuid:pk>/", PublicPollDetailView.as_view(), name="public-poll-detail"),
     path("poll-results/", PollResultsView.as_view(), name="poll-results"),
     path("public-closed-polls/", PublicClosedPollsView.as_view(), name="public-closed-polls"),
+    path("polls/by-token/", PollByTokenView.as_view(), name="poll-by-token"),
 
     # Admin analytics & stats
     path("admin/analytics/", AdminAnalyticsView.as_view(), name="admin-analytics"),

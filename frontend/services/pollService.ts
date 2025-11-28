@@ -79,6 +79,12 @@ export const PollService = {
     const res = await api.get("/admin/analytics/");
     return res.data;
   },
+
+  // ===== Public Polls by Token =====
+  getPollByToken: async (token: string) => {
+    const res = await api.get(`/polls/by-token/?token=${token}`);
+    return res.data;
+  },
 };
 
 export default PollService;

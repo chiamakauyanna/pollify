@@ -16,14 +16,14 @@ const LoginPage = () => {
 
   useEffect(() => {
     if (isAuthenticated) {
-      router.replace("/dashboard/admin");
+      router.replace("/dashboard");
     }
   }, [isAuthenticated, router]);
 
   const handleLogin = async (data: { username: string; password: string }) => {
     const result = await dispatch(LoginThunk(data));
     if (LoginThunk.fulfilled.match(result)) {
-      router.replace("/dashboard/admin");
+      router.replace("/dashboard");
     }
   };
 

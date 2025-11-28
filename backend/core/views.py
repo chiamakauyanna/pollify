@@ -6,7 +6,7 @@ from django.utils import timezone
 from django.db import models
 import uuid
 
-from .models import Poll, Choice, VoteLink, Vote
+from .models import Poll, VoteLink, Vote
 from .serializers import (
     PollAdminSerializer,
     PollPublicSerializer,
@@ -20,6 +20,7 @@ from .permissions import IsAdminUser
 from rest_framework.views import APIView
 from django.db.models import Count
 from django.shortcuts import get_object_or_404
+
 
 
 class PollViewSet(viewsets.ModelViewSet):
@@ -173,3 +174,30 @@ class PublicClosedPollsView(generics.ListAPIView):
 
     def get_queryset(self):
         return Poll.objects.filter(end_at__lt=timezone.now()).order_by("-end_at")
+
+
+class PollByTokenView(APIView):
+    """
+    Get poll details by vote link token.
+    Frontend calls this to render the poll page.
+    """
+    permission_classes = []  # AllowAny
+
+    def get(self, request):
+        token = request.query_params.get("token")
+        if not token:
+            return Response({"error": "Token is required."}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            votelink = VoteLink.objects.get(token=token)
+        except VoteLink.DoesNotExist:
+            return Response({"error": "Invalid token."}, status=status.HTTP_404_NOT_FOUND)
+
+        poll = votelink.poll
+        serializer = PollPublicSerializer(poll)
+        
+        data = serializer.data
+        data["has_voted"] = votelink.used
+        
+        
+        return Response(data)
