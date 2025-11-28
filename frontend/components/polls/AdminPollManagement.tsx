@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import Loader from "@/components/common/Loader";
 import Toast from "@/components/common/Toast";
-import { fetchPolls, deletePoll, fetchPollResults, generateVoteLink } from "@/redux/slices/pollSlice";
+import { fetchPolls, deletePoll, generateVoteLink } from "@/redux/slices/pollSlice";
 import { selectPolls, selectPollError, selectPollLoading } from "@/redux/selectors/pollSelectors";
 import { AppDispatch } from "@/redux/store";
 import { BarChart, Bar, Tooltip, ResponsiveContainer } from "recharts";
@@ -37,15 +37,6 @@ const AdminPollManagement = () => {
     }
   };
 
-  const loadResults = async (pollId: string) => {
-    try {
-      const results = await dispatch(fetchPollResults(pollId)).unwrap();
-      setPollResults((prev) => ({ ...prev, [pollId]: results.results }));
-    } catch (err) {
-      console.error(err);
-    }
-  };
-
   const refreshPolls = () => dispatch(fetchPolls());
 
   if (!mounted || loading) return <Loader />;
@@ -74,12 +65,6 @@ const AdminPollManagement = () => {
                     className="px-3 py-1 bg-indigo-600 text-white rounded hover:bg-indigo-700"
                   >
                     Generate Link
-                  </button>
-                  <button
-                    onClick={() => loadResults(poll.id)}
-                    className="px-3 py-1 bg-primary text-white rounded hover:bg-secondary"
-                  >
-                    Show Results
                   </button>
                   <button
                     onClick={() => handleDelete(poll.id)}

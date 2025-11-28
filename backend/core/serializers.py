@@ -11,7 +11,11 @@ class ChoiceSerializer(serializers.ModelSerializer):
         fields = ["id", "text", "votes_count"]
 
     def get_votes_count(self, obj):
-        return obj.votes.count()
+        poll = obj.poll
+        # Only show votes to voters if poll.show_results=True
+        if getattr(poll, "show_results", False):
+            return obj.votes.count()
+        return None
 
 
 class VoteLinkSerializer(serializers.ModelSerializer):

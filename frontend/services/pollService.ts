@@ -1,18 +1,5 @@
+import { CreatePollPayload } from "@/Interfaces/interface";
 import api from "./api";
-
-// Types
-export interface ChoicePayload {
-  text: string;
-}
-
-export interface CreatePollPayload {
-  title: string;
-  description?: string;
-  start_at?: string | null;
-  end_at?: string | null;
-  is_active?: boolean;
-  choices: ChoicePayload[];
-}
 
 export const PollService = {
   // ===== Admin Polls =====
@@ -28,7 +15,7 @@ export const PollService = {
 
   createPoll: async (data: CreatePollPayload) => {
     const res = await api.post("/polls/", data);
-    return res.data; // { poll, vote_links }
+    return res.data;
   },
 
   updatePoll: async (pollId: string, data: Partial<CreatePollPayload>) => {
@@ -63,15 +50,13 @@ export const PollService = {
   },
 
   // ===== Results =====
-  getPollResults: async (pollId: string) => {
-    const res = await api.get(`/poll-results/?poll_id=${pollId}`);
-
+  getPollResults: async (token: string) => {
+    const res = await api.get(`/poll-results/?token=${token}`);
     const results = res.data.results.map((r: any) => ({
       id: r.choice_id,
       text: r.text,
       votes_count: r.votes,
     }));
-
     return { ...res.data, results };
   },
 
@@ -81,11 +66,10 @@ export const PollService = {
   },
 
   // ===== Voting =====
-  submitVote: async (payload: { poll: string; choice: string; votelink: string }) => {
+  submitVote: async (payload: { choice: string; votelink: string }) => {
     const res = await api.post("/vote/", {
-      poll: payload.poll,
-      choice: payload.choice,
       token: payload.votelink,
+      choice_id: payload.choice,
     });
     return res.data;
   },

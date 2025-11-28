@@ -17,71 +17,72 @@ export interface SidebarProps {
   toggleSidebar?: () => void;
 }
 
-export interface PollOption {
-  id?: string;
-  text?: string;
-  vote_count?: number;
+export interface Choice {
+  id: string;
+  text: string;
+  votes_count?: number;
+}
+
+export interface VoteLink {
+  token: string;
+  poll: string;
+  invitee_email: string;
+  invitee_name: string;
+  used: boolean;
 }
 
 export interface Poll {
-  id?: string;
-  title?: string;
+  id: string;
+  title: string;
   description?: string;
-  createdAt?: string;
-  expires_at?: string | null;
-  isActive?: boolean;
-  options?: PollOption[];
-  updatedAt?: string;
+  choices: Choice[];
+  start_at?: string;
+  end_at?: string;
+  is_active: boolean;
+  vote_links: VoteLink[];
+  created_at: string;
+  is_votable: boolean;
+  show_results: boolean;
 }
+
+export interface ResultItem {
+  id: string;
+  text: string;
+  votes_count: number;
+}
+
+export interface Result {
+  poll_id: string;
+  title: string;
+  description: string;
+  results: ResultItem[];
+}
+
 export interface PollState {
   polls: Poll[];
-  activePolls: Poll[];
-  selectedPoll: Poll | null;
-  pollResults: unknown;
+  currentPoll: Poll | null;
+  publicPolls: Poll[];
+  closedPolls: Poll[];
+
+  pollStats: any;
+  adminAnalytics: any;
+  results: Result | null;
+  generatedLink: string | null;
+  successMessage: string | null;
   loading: boolean;
   error: string | null;
-  results: Poll[];
-}
-export interface DashboardCardProps {
-  title: string;
-  count?: number;
-  polls?: Poll[] | undefined;
-}
-export interface ResultsChartProps {
-  options: PollOption[];
 }
 
-export interface PollResults {
-  id: string;
+export interface ChoicePayload {
+  text: string;
+}
+
+export interface CreatePollPayload {
   title: string;
   description?: string;
-  created_at: string;
-  expires_at?: string;
+  start_at?: string | null;
+  end_at?: string | null;
   is_active?: boolean;
-  total_votes?: string;
-  options?: string;
+  choices: ChoicePayload[];
 }
-
-export interface VoteResponse {
-  id: string;
-  option: string;
-  voted_at: string;
-}
-
-export interface SelectedPollProps {
-  formData: Partial<Poll>;
-  message: { type: "error" | "success"; text: string } | null;
-  handleChange: (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
-  ) => void;
-  handleUpdatePoll: () => void;
-  isUpdating: boolean;
-  optionText: string;
-  setOptionText: (text: string) => void;
-  handleAddOption: () => void;
-  newOptions: string[];
-  handleSubmitOptions: () => void;
-  isSubmittingOptions: boolean;
-}
-
 

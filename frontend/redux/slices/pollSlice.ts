@@ -1,6 +1,7 @@
 import { AnyAction, SerializedError } from "@reduxjs/toolkit";
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
-import PollService, { CreatePollPayload } from "@/services/pollService";
+import PollService from "@/services/pollService";
+import { PollState, CreatePollPayload } from "@/Interfaces/interface";
 
 // ====== ASYNC THUNKS ======
 
@@ -19,7 +20,7 @@ export const fetchPoll = createAsyncThunk(
 export const createPoll = createAsyncThunk(
   "polls/create",
   async (data: CreatePollPayload) => {
-    return await PollService.createPoll(data); 
+    return await PollService.createPoll(data);
   }
 );
 
@@ -58,8 +59,8 @@ export const fetchPublicPolls = createAsyncThunk("polls/public", async () => {
 
 export const fetchPollResults = createAsyncThunk(
   "polls/results",
-  async (pollId: string) => {
-    return await PollService.getPollResults(pollId);
+  async (token: string) => {
+    return await PollService.getPollResults(token);
   }
 );
 
@@ -97,64 +98,6 @@ export const submitVote = createAsyncThunk(
     return await PollService.submitVote(payload);
   }
 );
-
-// ========== TYPES ==========
-
-export interface Choice {
-  id: string;
-  text: string;
-  votes_count?: number;
-}
-
-export interface VoteLink {
-  token: string;
-  poll: string;
-  invitee_email: string;
-  invitee_name: string;
-  used: boolean;
-}
-
-export interface Poll {
-  id: string;
-  title: string;
-  description?: string;
-  choices: Choice[];
-  start_at?: string;
-  end_at?: string;
-  is_active: boolean;
-  vote_links: VoteLink[];
-  created_at: string;
-  is_votable: boolean;
-  show_results: boolean;
-}
-
-export interface ResultItem {
-  id: string;
-  text: string;
-  votes_count: number;
-}
-
-export interface Result {
-  poll_id: string;
-  title: string;
-  description: string;
-  results: ResultItem[];
-}
-
-interface PollState {
-  polls: Poll[];
-  currentPoll: Poll | null;
-  publicPolls: Poll[];
-  closedPolls: Poll[];
-
-  pollStats: any;
-  adminAnalytics: any;
-  results: Result | null;
-  generatedLink: string | null;
-  successMessage: string | null;
-  loading: boolean;
-  error: string | null;
-}
 
 const initialState: PollState = {
   polls: [],
@@ -197,7 +140,7 @@ const pollSlice = createSlice({
       })
       .addCase(createPoll.fulfilled, (state, action) => {
         state.loading = false;
-        state.polls.unshift(action.payload.poll);
+        state.polls.unshift(action.payload);
         state.successMessage = "Poll created";
       })
       .addCase(updatePoll.fulfilled, (state, action) => {

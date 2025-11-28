@@ -5,7 +5,7 @@ export default function AdminResultsPage() {
   return (
     <AppLayout>
       <h1 className="text-2xl font-bold mb-4">Poll Results</h1>
-      <VoterPolls showResultsOnly />
+      <VoterPolls isAdminView />
     </AppLayout>
   );
 }

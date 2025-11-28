@@ -50,6 +50,9 @@ const authSlice = createSlice({
       state.loading = false;
       state.error = null;
     },
+    setAuthenticated: (state, action: { payload: boolean }) => {
+      state.isAuthenticated = action.payload;
+    },
   },
 
   extraReducers: (builder) => {
@@ -65,9 +68,10 @@ const authSlice = createSlice({
       .addCase(LoginThunk.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload as string;
+        state.isAuthenticated = false;
       });
   },
 });
 
-export const { logout } = authSlice.actions;
+export const { logout, setAuthenticated } = authSlice.actions;
 export default authSlice.reducer;
