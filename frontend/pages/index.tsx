@@ -36,6 +36,7 @@ export default function Home() {
               alt="animated picture of a lady voting"
               width={500}
               height={500}
+              className="md:w-96 xl:w-[450px] h-auto"
             />
           </div>
         </div>

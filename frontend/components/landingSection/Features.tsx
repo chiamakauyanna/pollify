@@ -2,7 +2,7 @@ import Image from "next/image";
 
 const Features = () => {
   return (
-    <div className="min-h-screen flex flex-col justify-center lg:mx-32 md:mx-20 mx-10 lg:my-20 md:my-20 mt-64 mb-20">
+    <div className="min-h-screen flex flex-col justify-center lg:mx-32 md:mx-20 mx-10 lg:my-20 md:my-20 mb-20 my-24">
       <div>
         <h2 className="lg:text-3xl md:text-2xl text-1xl text-center font-bold">
           Our Features

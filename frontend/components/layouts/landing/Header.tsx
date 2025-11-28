@@ -8,7 +8,7 @@ const Header = () => {
       <Logo />
 
       <div className="flex gap-3">
-            <Link href="/polls/create">
+            <Link href="/auth/login">
               <Button className="button-primary py-2 px-4 text-sm">Create Poll</Button>
             </Link>
       </div>
