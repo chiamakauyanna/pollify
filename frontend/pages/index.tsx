@@ -23,7 +23,7 @@ export default function Home() {
               </p>
             </div>
             <div className="text-center md:text-left lg:text-left">
-              <Link href="/dashboard">
+              <Link href="/dashboard/admin">
                 <Button className="button-primary py-3 px-8 mt-4 font-medium">
                   Get Started
                 </Button>
@@ -34,8 +34,8 @@ export default function Home() {
             <Image
               src="/images/voting-img.svg"
               alt="animated picture of a lady voting"
-              width={500}
-              height={500}
+              width={300}
+              height={300}
               className="md:w-96 xl:w-[450px] h-auto"
             />
           </div>
