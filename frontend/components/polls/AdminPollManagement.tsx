@@ -52,30 +52,33 @@ const AdminPollManagement = ({
   const refreshPolls = () => dispatch(fetchPolls());
 
   if (!mounted || loading) return <Loader />;
-  if (polls.length === 0) return <p className="p-6">No polls available.</p>;
+  if (polls.length === 0)
+    return (
+      <div className="p-6 text-center text-gray-500">No polls available.</div>
+    );
 
   return (
     <div className="space-y-6">
       {error && <Toast message={error} type="error" />}
-      <div className="grid md:grid-cols-1 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
         {polls.map((poll) => (
           <div
             key={poll.id}
-            className={`bg-white rounded-xl shadow p-4 space-y-2 cursor-pointer ${
-              isCardClickable ? "hover:bg-gray-50 transition" : ""
+            className={`bg-white rounded-xl shadow p-4 space-y-3 cursor-pointer transition hover:shadow-md ${
+              isCardClickable ? "hover:bg-gray-50" : ""
             }`}
             onClick={() =>
               isCardClickable && router.push(`/dashboard/polls/${poll.id}`)
             }
           >
             {/* Header */}
-            <div className="flex justify-between items-center mb-2">
-              <h3 className="font-bold text-lg">{poll.title}</h3>
+            <div className="flex justify-between items-center mb-1">
+              <h3 className="font-bold text-lg truncate">{poll.title}</h3>
 
               {!isCardClickable && (
                 <div className="relative">
                   <button
-                    className="text-gray-600 px-2 py-1 rounded hover:bg-gray-200"
+                    className="text-gray-600 px-2 py-1 rounded hover:bg-gray-200 focus:outline-none focus:ring"
                     onClick={(e) => {
                       e.stopPropagation();
                       setOpenMenuId(openMenuId === poll.id ? null : poll.id);
@@ -105,15 +108,31 @@ const AdminPollManagement = ({
             </div>
 
             {/* Status */}
-            <p className="text-gray-600">
-              Status: {poll.is_active ? "Active" : "Inactive"} | Votable:{" "}
-              {poll.is_votable ? "Yes" : "No"}
+            <p className="text-gray-600 text-sm sm:text-base">
+              Status:{" "}
+              <span
+                className={`font-semibold ${
+                  poll.is_active ? "text-green-600" : "text-gray-400"
+                }`}
+              >
+                {poll.is_active ? "Active" : "Inactive"}
+              </span>{" "}
+              | Votable:{" "}
+              <span
+                className={`font-semibold ${
+                  poll.is_votable ? "text-blue-600" : "text-gray-400"
+                }`}
+              >
+                {poll.is_votable ? "Yes" : "No"}
+              </span>
             </p>
 
             {/* Choices */}
-            <div className="mt-4">
-              <h4 className="font-semibold">Choices</h4>
-              <ul className="list-disc pl-5 space-y-1">
+            <div className="mt-2 overflow-x-auto">
+              <h4 className="font-semibold mb-1 text-sm sm:text-base">
+                Choices
+              </h4>
+              <ul className="list-disc pl-5 space-y-1 text-sm sm:text-base">
                 {poll.choices.map((choice) => (
                   <li key={choice.id}>{choice.text}</li>
                 ))}
@@ -122,14 +141,16 @@ const AdminPollManagement = ({
 
             {/* Update Form */}
             {editingPollId === poll.id && (
-              <UpdatePollForm
-                pollId={poll.id}
-                currentTitle={poll.title}
-                currentDescription={poll.description}
-                currentChoices={poll.choices}
-                onClose={() => setEditingPollId(null)}
-                onUpdated={refreshPolls}
-              />
+              <div className="mt-3">
+                <UpdatePollForm
+                  pollId={poll.id}
+                  currentTitle={poll.title}
+                  currentDescription={poll.description}
+                  currentChoices={poll.choices}
+                  onClose={() => setEditingPollId(null)}
+                  onUpdated={refreshPolls}
+                />
+              </div>
             )}
           </div>
         ))}

@@ -4,11 +4,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { selectSidebarState, toggleSidebar } from "@/redux/slices/sidebarSlice";
 import Logo from "../../common/Logo";
 import { IoMdClose } from "react-icons/io";
-import {
-  MdDashboard,
-  MdAddCircle,
-  MdListAlt,
-} from "react-icons/md";
+import { MdDashboard, MdAddCircle, MdListAlt } from "react-icons/md";
 
 const AdminSidebar: React.FC = () => {
   const isOpen = useSelector(selectSidebarState);
@@ -29,7 +25,7 @@ const AdminSidebar: React.FC = () => {
       } md:block ${isOpen ? "left-0" : "-left-full"} md:left-0 top-0`}
     >
       {/* Menu Button - Toggle Sidebar */}
-      <div className="flex items-center gap-3 p-6">
+      <div className="flex items-center gap-3 px-6 py-4.5">
         <button
           className="text-2xl focus:outline-none lg:hidden md:hidden flex"
           onClick={() => dispatch(toggleSidebar())}
@@ -43,19 +39,29 @@ const AdminSidebar: React.FC = () => {
       </div>
 
       {/* Menu */}
-      <div className="bg-primary h-full flex flex-col justify-between py-12 rounded-tr-4xl">
+      <div className="bg-primary h-full flex flex-col justify-between py-12">
         <nav className="space-y-8 mt-6 pt-6 pl-6 text-background">
           {menuItems.map((item) => (
             <Link
               key={item.href}
               href={item.href}
+              title={item.name}
               className={`flex items-center gap-4 text-lg transition-all ${
                 router.pathname === item.href
                   ? "bg-background text-primary px-4 py-2 rounded-l-lg"
                   : "hover:bg-white/20 px-4 py-2 rounded-lg"
               }`}
             >
-              {item.icon}
+              {/* Icon with conditional size */}
+              <span
+                className={`transition-all ${
+                  isOpen ? "text-xl md:text-1xl" : "text-2xl"
+                }`}
+              >
+                {item.icon}
+              </span>
+
+              {/* Label only when open */}
               {isOpen && <span>{item.name}</span>}
             </Link>
           ))}

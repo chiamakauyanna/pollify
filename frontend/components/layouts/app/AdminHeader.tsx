@@ -1,9 +1,11 @@
-import { useDispatch } from "react-redux";
-import { toggleSidebar } from "@/redux/slices/sidebarSlice";
+import { useDispatch, useSelector } from "react-redux";
+import { toggleSidebar, selectSidebarState } from "@/redux/slices/sidebarSlice";
 import { IoMdMenu } from "react-icons/io";
+import { HiArrowLongLeft, HiArrowLongRight } from "react-icons/hi2";
 
 const AdminHeader = () => {
   const dispatch = useDispatch();
+  const isSidebarOpen = useSelector(selectSidebarState);
 
   return (
     <header className="bg-background flex items-center justify-between py-4 px-6">
@@ -12,7 +14,7 @@ const AdminHeader = () => {
         className="text-2xl focus:outline-none"
         onClick={() => dispatch(toggleSidebar())}
       >
-        <IoMdMenu />
+        {!isSidebarOpen ? <HiArrowLongRight size={28}/> : <HiArrowLongLeft />}
       </button>
 
       {/* User Profile */}
