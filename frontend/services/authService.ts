@@ -1,4 +1,4 @@
-import api, { getUserFromToken } from "./api";
+import adminApi from "./adminApi";
 import { setTokens } from "../utils/tokenManager";
 
 // Types
@@ -9,17 +9,8 @@ export interface LoginData {
 
 // Login
 export const login = async (data: { username: string; password: string }) => {
-  const res = await api.post("/token/", data);
-
+  const res = await adminApi.post("/token/", data);
   setTokens(res.data);
-
-  const decoded = getUserFromToken(); 
-
-  return {
-    ...res.data,
-    user: {
-      username: decoded?.username || "",
-      is_staff: decoded?.is_staff === true,
-    },
-  };
+  return { ...res.data };
 };
+
