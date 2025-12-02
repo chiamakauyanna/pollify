@@ -1,209 +1,234 @@
-# Pollify – Full-Stack Online Polling System
+# Pollify
 
-![Pollify Banner](docs/screenshots/banner.png)
+## Overview
 
-## **Project Overview**
+**Pollify** is a full-featured polling platform that allows administrators to create polls, manage choices, generate unique vote links, and view analytics. This frontend is built using **Next.js**, **TypeScript**, and **Redux Toolkit**, providing a responsive and modern admin interface.
 
-Pollify is a **role-based polling system** built as a full-stack application:
+Admins can:
 
-- **Admins** create and manage polls.
-- **Voters** can vote on polls assigned to them and view live statistics.
-- **Frontend** built with React/Next.js and **Redux** for state management.
-- **Backend** built with Django REST Framework, JWT authentication, and live poll stats.
-
-Pollify ensures **secure voting**, **role-based access**, and **real-time updates** for users.
-
----
-
-## **Key Features**
-
-- **Role-based Authentication**
-
-  - Separate registration and login flows for Admins and Voters.
-  - JWT authentication for secure sessions.
-
-- **Admin Features**
-
-  - Create, edit, and toggle polls.
-  - Add and manage poll choices.
-  - View live statistics for their polls.
-
-- **Voter Features**
-
-  - See only active polls from assigned admin.
-  - Vote once per poll.
-  - View live poll statistics.
-
-- **Frontend Features**
-
-  - **Redux** for global state management (user session, polls, votes).
-  - Dynamic UI updates as polls and votes change.
-  - Separate dashboards for Admin and Voter roles.
-
-- **Backend Features**
-
-  - Role-based API endpoints with permissions.
-  - One vote per poll per voter enforced at database level.
-  - API documentation via Swagger and Redoc.
+* Create, update, and delete polls
+* Manage poll choices
+* Generate unique vote links for invitees
+* View poll statistics and analytics
+* Track total and daily votes
+* Logout securely via JWT authentication
 
 ---
 
-## **Tech Stack**
+## Table of Contents
 
-| Layer              | Technology                                          |
-| ------------------ | --------------------------------------------------- |
-| **Frontend**       | React / Next.js, Redux Toolkit, Axios, Tailwind CSS |
-| **Backend**        | Django 5.2, Django REST Framework                   |
-| **Authentication** | JWT via djangorestframework-simplejwt               |
-| **Database**       | SQLite (dev), PostgreSQL (prod)                     |
-| **API Docs**       | DRF Spectacular (Swagger / Redoc)                   |
-| **Deployment**     | Docker / Vercel / Heroku optional                   |
+* [Demo](#demo)
+* [Tech Stack](#tech-stack)
+* [Project Structure](#project-structure)
+* [Features](#features)
+* [Installation](#installation)
+* [Environment Variables](#environment-variables)
+* [Running the Project](#running-the-project)
+* [Redux State Management](#redux-state-management)
+* [Components](#components)
+* [Folder Structure](#folder-structure)
+* [Future Improvements](#future-improvements)
 
 ---
 
-## **Project Structure**
+## Demo
+
+### Admin Dashboard Screenshot
+
+![Pollify Admin Dashboard](./screenshots/pollify-poll.png)
+
+---
+
+## Tech Stack
+
+* **Framework:** Next.js (v13+)
+* **Language:** TypeScript
+* **State Management:** Redux Toolkit
+* **Styling:** Tailwind CSS
+* **Icons:** react-icons
+* **Authentication:** JWT (via `authSlice`)
+* **Routing:** Next.js dynamic routing
+
+---
+
+## Project Structure
+
+Key directories and files:
 
 ```
-pollify/
-├─ backend/                   # Django backend
-│  ├─ core/                   # App: models, serializers, views, permissions
-│  ├─ pollify_api/            # Project settings
-│  ├─ manage.py
-├─ frontend/                  # React/Next.js frontend
-│  ├─ pages/                  # Pages for Admin and Voter dashboards
-│  ├─ components/             # Reusable UI components
-│  ├─ redux/                  # Redux store, slices (user, polls, votes)
-│  ├─ api/                    # Axios API calls
-│  ├─ public/                 # Static assets
-├─ docs/                      # Screenshots and documentation
-├─ requirements.txt           # Backend dependencies
-├─ package.json               # Frontend dependencies
-└─ README.md
+/components      # Reusable UI components (Button, Loader, Toast, Layouts, Forms)
+/pages           # Next.js pages
+/pages/dashboard # Admin dashboard pages (polls, analytics, votes)
+/redux           # Redux slices and store
+/services        # API services (optional)
+/styles          # Global Tailwind CSS styles
 ```
 
 ---
 
-## **Setup Instructions**
+## Features
 
-### **Backend**
+### Poll Management
+
+* View all polls (active, closed, votable)
+* Create new polls with multiple choices
+* Update or delete polls
+* Inline poll editing via `UpdatePollForm`
+* Status indicators: **Active/Inactive** and **Votable/Not Votable**
+
+### Vote Management
+
+* Generate unique vote links per invitee
+* View poll results after poll ends
+* Prevent double voting via token system
+
+### Analytics
+
+* Total polls created
+* Active polls count
+* Total votes
+* Votes today
+* Closed polls count
+
+### Sidebar & Layout
+
+* Toggleable sidebar for navigation
+* Responsive header
+* Admin info with dynamic logout button
+
+---
+
+## Installation
+
+1. **Clone the repository**
 
 ```bash
-cd backend
-python -m venv venv
-source venv/bin/activate  # Linux/macOS
-venv\Scripts\activate     # Windows
-pip install -r requirements.txt
-python manage.py makemigrations
-python manage.py migrate
-python manage.py runserver
-```
-
-### **Frontend**
-
-```bash
+git clone https://github.com/chiamakauyanna/pollify.git
 cd frontend
-npm install
-npm run dev
 ```
 
-- Make sure the frontend API URL matches your backend:
+2. **Install dependencies**
+
+```bash
+npm install
+# or
+yarn install
+```
+
+---
+
+## Environment Variables
+
+Create a `.env.local` file in the root directory:
 
 ```env
-NEXT_PUBLIC_API_URL=http://localhost:8000/api/
+NEXT_PUBLIC_API_BASE_URL=http://localhost:8000/api
+NEXT_PUBLIC_APP_NAME=Pollify
+```
+
+* `NEXT_PUBLIC_API_BASE_URL` — Backend API endpoint
+* Add other keys if necessary for analytics or external services
+
+---
+
+## Running the Project
+
+**Development server**:
+
+```bash
+npm run dev
+# or
+yarn dev
+```
+
+Open [http://localhost:3000](http://localhost:3000) in your browser.
+
+**Production build**:
+
+```bash
+npm run build
+npm start
 ```
 
 ---
 
-## **Frontend & Redux Flow**
+## Redux State Management
 
-- **User authentication**
+The frontend uses **Redux Toolkit** for state management with slices for:
 
-  - Redux slice stores `user` info and JWT token.
-  - Axios interceptors attach token to API calls.
+* **authSlice**: JWT authentication, login, logout
+* **pollSlice**: Poll fetching, creation, deletion, and vote stats
+* **sidebarSlice**: Toggle sidebar state
 
-- **Polls**
+Selectors are defined for accessing slices easily:
 
-  - Redux slice fetches polls for the dashboard.
-  - Voters see only polls from their assigned admin.
-
-- **Voting**
-
-  - Vote action triggers API call.
-  - Redux state updates automatically to reflect new vote counts.
-
-- **Stats**
-
-  - Poll stats fetched from backend and stored in Redux for live display.
-
----
-
-## **Roles & Permissions**
-
-| Role      | Frontend Dashboard | Backend Access                               |
-| --------- | ------------------ | -------------------------------------------- |
-| **Admin** | Poll management UI | Create/manage polls, add choices, view stats |
-| **Voter** | Poll voting UI     | View active polls, vote once, view stats     |
-
----
-
-## **API Overview**
-
-### Authentication
-
-- `POST /api/auth/register/admin/` – Admin registration
-- `POST /api/auth/register/voter/` – Voter registration
-- `POST /api/auth/login/admin/` – Admin login
-- `POST /api/auth/login/voter/` – Voter login
-
-### Polls
-
-- `GET /api/polls/` – Fetch polls (filtered by role)
-- `POST /api/polls/` – Admin creates a poll
-- `PATCH /api/polls/<id>/` – Admin updates a poll
-- `GET /api/polls/<id>/stats/` – Live poll stats
-
-### Choices
-
-- `POST /api/choices/` – Admin adds a choice
-- `GET /api/choices/` – List choices with vote counts
-
-### Voting
-
-- `POST /api/vote/` – Voter casts a vote (one per poll)
-
----
-
-## **Mermaid Flowchart**
-
-```mermaid
-flowchart TD
-    A[Registration] --> B1[Admin SignUp]
-    A --> B2[Voter SignUp]
-
-    B1 --> C1[Admin Login]
-    B2 --> C2[Voter Login]
-
-    C1 --> D1[Admin Dashboard: Create Polls / Add Choices / View Stats]
-    C2 --> D2[Voter Dashboard: View Polls / Vote / View Stats]
-
-    D2 --> E2[Vote Submission -> Backend -> Redux State Update]
-    D1 --> E1[Stats Refresh -> Redux State Update -> Dashboard]
-
-    style B1 fill:#ffcccc,stroke:#ff0000,stroke-width:2px
-    style B2 fill:#ccffcc,stroke:#00cc00,stroke-width:2px
+```ts
+const polls = useSelector(selectPolls);
+const loading = useSelector(selectPollLoading);
+const error = useSelector(selectPollError);
 ```
 
 ---
 
-## **Contributing**
+## Components
 
-1. Fork the repository
-2. Create a feature branch
-3. Commit and push changes
-4. Open a Pull Request
+### Layout Components
+
+* `AppLayout` – Wraps dashboard pages
+* `AdminHeader` – Header with sidebar toggle and logout
+* `Sidebar` – Admin sidebar navigation
+
+### UI Components
+
+* `Loader` – Loading spinner
+* `Toast` – Notifications
+* `Button` – Reusable buttons
+
+### Poll Components
+
+* `AdminPollManagement` – Poll cards with update/delete actions
+* `UpdatePollForm` – Inline poll update form
 
 ---
 
-## **License**
+## Folder Structure
 
-MIT License © 2025 Chiamaka Uyanna
+```
+/components
+  /common       # Loader, Toast, Buttons
+  /layouts      # AppLayout, AdminHeader, Sidebar
+  /polls
+    AdminPollManagement.tsx
+/pages
+  /auth
+    components.tsx    # UpdatePollForm.tsx, PollForm
+    login
+  /dashboard
+    index.tsx       # Admin dashboard overview
+    create.tsx
+    polls/[id].tsx  # Single poll detail
+  /voter/[token].tsx
+/redux
+  store.ts
+  slices
+    authSlice.ts
+    pollSlice.ts
+    sidebarSlice.ts
+/selectors
+  pollSelectors.ts
+  authSelectors.ts
+/styles
+  globals.css
+```
+
+---
+
+## Future Improvements
+
+* Integrate charting library (Recharts / Chart.js) for poll analytics
+* Add user management for admins
+* Add email notifications when vote links are generated
+* Implement dark mode toggle
+* Add pagination and search/filter for polls
+
+
