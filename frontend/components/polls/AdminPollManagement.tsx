@@ -15,11 +15,13 @@ import { useRouter } from "next/router";
 interface AdminPollManagementProps {
   pollId?: string;
   isCardClickable?: boolean;
+  onPollChange?: () => void; // <-- new callback prop
 }
 
 const AdminPollManagement = ({
   pollId,
   isCardClickable = false,
+  onPollChange,
 }: AdminPollManagementProps) => {
   const dispatch = useDispatch<AppDispatch>();
   const router = useRouter();
@@ -43,13 +45,27 @@ const AdminPollManagement = ({
 
   const polls = pollId ? allPolls.filter((p) => p.id === pollId) : allPolls;
 
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+
   const handleDelete = async (id: string) => {
-    if (!confirm("Are you sure you want to delete this poll?")) return;
-    await dispatch(deletePoll(id));
-    setOpenMenuId(null);
+    setConfirmDeleteId(id);
   };
 
-  const refreshPolls = () => dispatch(fetchPolls());
+  const refreshPolls = () => {
+    dispatch(fetchPolls());
+    onPollChange?.(); // <-- also trigger parent refresh if needed
+  };
+  const confirmDelete = async () => {
+    if (!confirmDeleteId) return;
+    await dispatch(deletePoll(confirmDeleteId));
+    setConfirmDeleteId(null);
+    if (pollId) {
+      router.push("/dashboard/polls"); // or wherever your poll list is
+    } else {
+      // Refresh list if we're on the list page
+      dispatch(fetchPolls());
+    }
+  };
 
   if (!mounted || loading) return <Loader />;
   if (polls.length === 0)
@@ -60,6 +76,15 @@ const AdminPollManagement = ({
   return (
     <div className="space-y-6">
       {error && <Toast message={error} type="error" />}
+      {confirmDeleteId && (
+        <Toast
+          message="Are you sure you want to delete this poll?"
+          type="warning"
+          actionLabel="Yes, Delete"
+          onAction={confirmDelete}
+          onClose={() => setConfirmDeleteId(null)}
+        />
+      )}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
         {polls.map((poll) => (
           <div
@@ -112,10 +137,14 @@ const AdminPollManagement = ({
               Status:{" "}
               <span
                 className={`font-semibold ${
-                  poll.is_active ? "text-green-600" : "text-gray-400"
+                  poll.is_votable ? "text-green-600" : "text-gray-400"
                 }`}
               >
-                {poll.is_active ? "Active" : "Inactive"}
+                {poll.is_votable
+                  ? "Active"
+                  : poll.is_active
+                  ? "Inactive (Closed)"
+                  : "Inactive (Not Started)"}
               </span>{" "}
               | Votable:{" "}
               <span

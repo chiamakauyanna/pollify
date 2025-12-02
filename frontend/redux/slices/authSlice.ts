@@ -4,13 +4,11 @@ import { AxiosError } from "axios";
 import { clearTokens } from "../../utils/tokenManager";
 
 interface AuthState {
-  isAuthenticated: boolean;
   loading: boolean;
   error: string | null;
 }
 
 const initialState: AuthState = {
-  isAuthenticated: false,
   loading: false,
   error: null,
 };
@@ -46,12 +44,8 @@ const authSlice = createSlice({
   reducers: {
     logout: (state) => {
       clearTokens();
-      state.isAuthenticated = false;
       state.loading = false;
       state.error = null;
-    },
-    setAuthenticated: (state, action: { payload: boolean }) => {
-      state.isAuthenticated = action.payload;
     },
   },
 
@@ -63,15 +57,13 @@ const authSlice = createSlice({
       })
       .addCase(LoginThunk.fulfilled, (state, action) => {
         state.loading = false;
-        state.isAuthenticated = true;
       })
       .addCase(LoginThunk.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload as string;
-        state.isAuthenticated = false;
       });
   },
 });
 
-export const { logout, setAuthenticated } = authSlice.actions;
+export const { logout } = authSlice.actions;
 export default authSlice.reducer;

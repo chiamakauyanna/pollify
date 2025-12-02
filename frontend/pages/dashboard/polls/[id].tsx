@@ -40,12 +40,28 @@ export default function PollDetailsPage() {
   const error = useSelector(selectPollError);
 
   const [generatedLink, setGeneratedLink] = useState<string | null>(null);
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
 
-  useEffect(() => {
+  // Fetch poll & stats
+  const fetchData = () => {
     if (!id || Array.isArray(id)) return;
     dispatch(fetchPoll(id as string));
     dispatch(fetchPollStats(id as string));
+  };
+
+  useEffect(() => {
+    fetchData();
   }, [id, dispatch]);
+
+  const handleCopyLink = async () => {
+    if (!generatedLink) return;
+    try {
+      await navigator.clipboard.writeText(generatedLink);
+      setToastMessage("Link copied!");
+    } catch {
+      setToastMessage("Failed to copy link");
+    }
+  };
 
   const handleGenerateLink = async () => {
     if (!id || Array.isArray(id)) return;
@@ -57,6 +73,7 @@ export default function PollDetailsPage() {
       setGeneratedLink(fullLink);
     } catch (err) {
       console.error("Failed to generate vote link:", err);
+      setToastMessage("Failed to generate vote link");
     }
   };
 
@@ -72,8 +89,10 @@ export default function PollDetailsPage() {
 
   return (
     <AppLayout>
+      {/* Global error toast */}
       {error && <Toast message={error} type="error" />}
 
+      {/* Main Content */}
       <div className="space-y-8">
         {/* Back Button */}
         <button
@@ -107,16 +126,19 @@ export default function PollDetailsPage() {
               >
                 <span className="text-blue-600 truncate">{generatedLink}</span>
                 <button
-                  className="ml-2 px-2 py-1 text-gray-700 hover:text-gray-900 border rounded"
-                  onClick={() => {
-                    navigator.clipboard
-                      .writeText(generatedLink)
-                      .then(() => alert("Link copied!"))
-                      .catch(() => alert("Failed to copy link"));
-                  }}
+                  className="ml-2 px-2 py-1 text-gray-700 hover:text-gray-900 border rounded whitespace-nowrap text-sm"
+                  onClick={handleCopyLink}
                 >
                   Copy
                 </button>
+
+                {toastMessage && (
+                  <Toast
+                    message={toastMessage}
+                    type="success"
+                    onClose={() => setToastMessage(null)}
+                  />
+                )}
               </motion.div>
             )}
           </AnimatePresence>
@@ -126,10 +148,7 @@ export default function PollDetailsPage() {
         {stats.stats && stats.stats.length > 0 && (
           <div className="flex flex-wrap gap-3">
             {stats.stats.map((choice: any, idx: number) => (
-              <div
-                key={choice.choice_id}
-                className="flex items-center space-x-2"
-              >
+              <div key={choice.choice_id} className="flex items-center space-x-2">
                 <span
                   className={`w-4 h-4 rounded-full ${
                     progressColors[idx % progressColors.length]
@@ -157,18 +176,12 @@ export default function PollDetailsPage() {
                   className="bg-white p-4 rounded-xl shadow hover:shadow-lg transition-all"
                 >
                   <div className="flex justify-between items-center mb-2">
-                    <span className="font-medium text-gray-800">
-                      {choice.text}
-                    </span>
+                    <span className="font-medium text-gray-800">{choice.text}</span>
                     <motion.span
                       className="text-sm font-semibold text-gray-600"
                       initial={{ scale: 0 }}
                       animate={{ scale: 1 }}
-                      transition={{
-                        type: "spring",
-                        stiffness: 300,
-                        damping: 15,
-                      }}
+                      transition={{ type: "spring", stiffness: 300, damping: 15 }}
                     >
                       {choice.votes} votes
                     </motion.span>
@@ -196,7 +209,18 @@ export default function PollDetailsPage() {
         )}
 
         {/* Admin Management */}
-        <AdminPollManagement pollId={id as string} />
+        <AdminPollManagement
+          pollId={id as string}
+          onPollChange={() => {
+            fetchData();
+            setToastMessage("Poll list updated!");
+          }}
+        />
+
+        {/* Toast for updates */}
+        {toastMessage && (
+          <Toast message={toastMessage} type="success" onClose={() => setToastMessage(null)} />
+        )}
       </div>
     </AppLayout>
   );

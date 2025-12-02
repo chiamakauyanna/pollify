@@ -19,6 +19,8 @@ export default function AdminDashboard() {
   const loading = useSelector(selectPollLoading);
   const error = useSelector(selectPollError);
 
+  const closedPolls = polls.filter((p) => !p.is_active).length;
+
   useEffect(() => {
     dispatch(fetchPolls());
     dispatch(fetchAdminAnalytics());
@@ -73,10 +75,10 @@ export default function AdminDashboard() {
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
             <div className="py-8 px-4 bg-purple-50 rounded-xl text-center shadow-sm">
               <h3 className="text-sm font-medium mb-1 text-purple-700">
-                Total Users
+                Todays Votes
               </h3>
               <p className="text-xl font-bold text-purple-900">
-                {adminAnalytics?.total_users || 0}
+                {adminAnalytics?.todays_votes || 0}
               </p>
             </div>
             <div className="py-8 px-4 bg-green-50 rounded-xl text-center shadow-sm">
@@ -84,7 +86,7 @@ export default function AdminDashboard() {
                 Closed Polls
               </h3>
               <p className="text-xl font-bold text-green-900">
-                {adminAnalytics?.closed_polls || 0}
+                {closedPolls || 0}
               </p>
             </div>
             <div className="py-8 px-4 bg-blue-50 rounded-xl text-center shadow-sm">
@@ -97,8 +99,6 @@ export default function AdminDashboard() {
             </div>
           </div>
         </div>
-
-        {/* Optional: More widgets, charts, or table */}
       </div>
     </AppLayout>
   );

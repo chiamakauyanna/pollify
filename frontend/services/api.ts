@@ -38,7 +38,24 @@ api.interceptors.response.use(
         return api(originalRequest);
       } catch {
         clearTokens();
-        window.location.href = "/auth/login";
+
+        // All PUBLIC endpoints (AllowAny)
+        const publicPaths = [
+          "/vote",
+          "/public-polls",
+          "/poll-results",
+          "/polls/by-token",
+          "/public-closed-polls",
+        ];
+
+        const isPublic = publicPaths.some((path) =>
+          originalRequest.url.startsWith(path)
+        );
+
+        if (!isPublic) {
+          window.location.href = "/auth/login";
+        }
+        return Promise.reject(error);
       }
     }
 

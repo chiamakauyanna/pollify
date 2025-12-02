@@ -1,15 +1,53 @@
+import { useEffect } from "react";
+
 interface ToastProps {
   message: string;
-  type?: "success" | "error";
+  type?: "error" | "success" | "info" | "warning";
+  duration?: number;
+  onClose?: () => void;
+  actionLabel?: string;
+  onAction?: () => void;
 }
 
-const Toast = ({ message, type = "success" }: ToastProps) => {
+const Toast: React.FC<ToastProps> = ({
+  message,
+  type = "info",
+  duration = 5000,
+  onClose,
+  actionLabel,
+  onAction,
+}) => {
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      onClose?.();
+    }, duration);
+
+    return () => clearTimeout(timer);
+  }, [duration, onClose]);
+
+  const bgColor =
+    type === "error"
+      ? "bg-red-500"
+      : type === "success"
+      ? "bg-green-500"
+      : type === "warning"
+      ? "bg-yellow-500"
+      : "bg-blue-500";
+
   return (
     <div
-      className={`fixed bottom-6 right-6 px-4 py-2 rounded shadow text-white font-bold transition
-        ${type === "success" ? "bg-purple-500" : "bg-red-500"}`}
+      className={`px-4 py-3 rounded-lg text-white shadow-md flex justify-between items-center space-x-4`}
+      role="alert"
     >
-      {message}
+      <span>{message}</span>
+      {actionLabel && onAction && (
+        <button
+          onClick={onAction}
+          className="bg-white text-black px-3 py-1 rounded hover:bg-gray-200"
+        >
+          {actionLabel}
+        </button>
+      )}
     </div>
   );
 };

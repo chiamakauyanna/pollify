@@ -1,29 +1,45 @@
-import { useEffect } from "react";
-import { useSelector } from "react-redux";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/router";
-import { RootState } from "../redux/store";
-import Loader from "./common/Loader";
+import { jwtDecode } from "jwt-decode";
 
 interface Props {
   children: React.ReactNode;
 }
 
-const ProtectedRoute: React.FC<Props> = ({ children }) => {
+interface DecodedUser {
+  username: string;
+  is_staff: boolean;
+  exp?: number;
+  iat?: number;
+}
+
+export default function ProtectedRoute({ children }: Props) {
   const router = useRouter();
-  const isAuthenticated = useSelector(
-    (state: RootState) => state.auth.isAuthenticated
-  );
+  const [verified, setVerified] = useState(false);
 
   useEffect(() => {
-    if (typeof isAuthenticated === "boolean" && !isAuthenticated) {
+    const token = localStorage.getItem("access_token");
+
+    if (!token) {
+      router.replace("/auth/login");
+      return;
+    }
+
+    try {
+      const decoded = jwtDecode<DecodedUser>(token);
+
+      if (!decoded.is_staff) {
+        router.replace("/auth/login");
+        return;
+      }
+
+      setVerified(true);
+    } catch {
       router.replace("/auth/login");
     }
-  }, [isAuthenticated, router]);
+  }, [router]);
 
-  if (isAuthenticated === undefined) return <Loader />; // waiting for hydration
-  if (!isAuthenticated) return null; // redirecting
+  if (!verified) return null;
 
   return <>{children}</>;
-};
-
-export default ProtectedRoute;
+}
