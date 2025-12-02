@@ -19,8 +19,6 @@ export default function AdminDashboard() {
   const loading = useSelector(selectPollLoading);
   const error = useSelector(selectPollError);
 
-  const closedPolls = polls.filter((p) => !p.is_active).length;
-
   useEffect(() => {
     dispatch(fetchPolls());
     dispatch(fetchAdminAnalytics());
@@ -33,7 +31,9 @@ export default function AdminDashboard() {
       <div className="space-y-12 mt-12">
         {/* Page Title */}
         <div className="flex flex-col justify-between items-start gap-4">
-          <h1 className="text-xl md:text-2xl lg:text-3xl font-semibold">Admin Dashboard</h1>
+          <h1 className="text-xl md:text-2xl lg:text-3xl font-semibold">
+            Admin Dashboard
+          </h1>
           <p className="text-secondary-text">
             Welcome back! Here’s a quick overview of your polls and analytics.
           </p>
@@ -47,54 +47,97 @@ export default function AdminDashboard() {
             <h2 className="text-md md:text-lg font-semibold text-secondary-text mb-2">
               Total Polls
             </h2>
-            <p className="text-3xl">{polls.length}</p>
+            <p className="text-3xl">{adminAnalytics?.total_polls || 0}</p>
           </div>
 
           <div className="bg-gray-100 p-6 rounded-2xl shadow hover:shadow-xl transition duration-200 text-center">
             <h2 className="text-md md:text-lg font-semibold text-secondary-text mb-2">
               Active Polls
             </h2>
-            <p className="text-3xl">
-              {polls.filter((p) => p.is_active).length}
-            </p>
+            <p className="text-3xl">{adminAnalytics?.active_polls || 0}</p>
           </div>
 
           <div className="bg-gray-100 p-6 rounded-2xl shadow hover:shadow-xl transition duration-200 text-center">
             <h2 className="text-md md:text-lg font-semibold text-secondary-text mb-2">
-              Total Votes
+              Votable Polls
             </h2>
-            <p className="text-3xl">
-              {adminAnalytics?.total_votes || 0}
-            </p>
+            <p className="text-3xl">{adminAnalytics?.votable_polls || 0}</p>
           </div>
         </div>
 
-        {/* Admin Overview */}
+        {/* Detailed Overview */}
         <div>
           <h2 className="text-xl font-bold mb-4 text-purple-700">Overview</h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
             <div className="py-8 px-4 bg-purple-50 rounded-xl text-center shadow-sm">
               <h3 className="text-sm font-medium mb-1 text-purple-700">
-                Todays Votes
+                Total Votes
               </h3>
               <p className="text-xl font-bold text-purple-900">
+                {adminAnalytics?.total_votes || 0}
+              </p>
+            </div>
+
+            <div className="py-8 px-4 bg-green-50 rounded-xl text-center shadow-sm">
+              <h3 className="text-sm font-medium mb-1 text-green-700">
+                Today's Votes
+              </h3>
+              <p className="text-xl font-bold text-green-900">
                 {adminAnalytics?.todays_votes || 0}
               </p>
             </div>
-            <div className="py-8 px-4 bg-green-50 rounded-xl text-center shadow-sm">
-              <h3 className="text-sm font-medium mb-1 text-green-700">
-                Closed Polls
-              </h3>
-              <p className="text-xl font-bold text-green-900">
-                {closedPolls || 0}
-              </p>
-            </div>
+
             <div className="py-8 px-4 bg-blue-50 rounded-xl text-center shadow-sm">
               <h3 className="text-sm font-medium mb-1 text-blue-700">
-                Total Votes
+                Closed Polls
               </h3>
               <p className="text-xl font-bold text-blue-900">
-                {adminAnalytics?.total_votes || 0}
+                {adminAnalytics?.closed_polls || 0}
+              </p>
+            </div>
+
+            <div className="py-8 px-4 bg-yellow-50 rounded-xl text-center shadow-sm">
+              <h3 className="text-sm font-medium mb-1 text-yellow-700">
+                Upcoming Polls
+              </h3>
+              <p className="text-xl font-bold text-yellow-900">
+                {adminAnalytics?.upcoming_polls || 0}
+              </p>
+            </div>
+
+            <div className="py-8 px-4 bg-pink-50 rounded-xl text-center shadow-sm">
+              <h3 className="text-sm font-medium mb-1 text-pink-700">
+                Unique Voters
+              </h3>
+              <p className="text-xl font-bold text-pink-900">
+                {adminAnalytics?.unique_voters || 0}
+              </p>
+            </div>
+
+            <div className="py-8 px-4 bg-indigo-50 rounded-xl text-center shadow-sm">
+              <h3 className="text-sm font-medium mb-1 text-indigo-700">
+                VoteLink Usage
+              </h3>
+              <p className="text-xl font-bold text-indigo-900">
+                {adminAnalytics?.votelink_usage_percent || 0}%
+              </p>
+            </div>
+
+            <div className="py-8 px-4 bg-teal-50 rounded-xl text-center shadow-sm">
+              <h3 className="text-sm font-medium mb-1 text-teal-700">
+                Most Voted Poll
+              </h3>
+              <p className="text-xl font-bold text-teal-900">
+                {adminAnalytics?.most_voted_poll || "-"}
+              </p>
+            </div>
+
+            <div className="py-8 px-4 bg-gray-50 rounded-xl text-center shadow-sm">
+              <h3 className="text-sm font-medium mb-1 text-gray-700">
+                Least Voted Poll
+              </h3>
+              <p className="text-xl font-bold text-gray-900">
+                {adminAnalytics?.least_voted_poll || "-"}
               </p>
             </div>
           </div>

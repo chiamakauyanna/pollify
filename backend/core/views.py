@@ -1,3 +1,6 @@
+from .models import Poll, Vote, VoteLink, User
+from django.db.models import Count, Q
+from rest_framework.permissions import IsAdminUser
 from rest_framework import viewsets, generics, status
 from rest_framework.response import Response
 from rest_framework.decorators import action
@@ -20,7 +23,6 @@ from .permissions import IsAdminUser
 from rest_framework.views import APIView
 from django.db.models import Count
 from django.shortcuts import get_object_or_404
-
 
 
 class PollViewSet(viewsets.ModelViewSet):
@@ -87,7 +89,8 @@ class PollListView(generics.ListAPIView):
         now = timezone.now()
         qs = Poll.objects.filter(is_active=True, start_at__lte=now)
         # include polls where end_at is either null (no end) or in the future
-        qs = qs.filter(models.Q(end_at__gte=now) | models.Q(end_at__isnull=True))
+        qs = qs.filter(models.Q(end_at__gte=now) |
+                       models.Q(end_at__isnull=True))
         return qs.order_by("-created_at")
 
 
@@ -112,7 +115,8 @@ class PollResultsView(generics.RetrieveAPIView):
         if not poll.show_results:
             return Response({"error": "Results are not available yet."}, status=status.HTTP_403_FORBIDDEN)
 
-        results = [{"choice_id": str(c.id), "text": c.text, "votes": c.votes.count()} for c in poll.choices.all()]
+        results = [{"choice_id": str(
+            c.id), "text": c.text, "votes": c.votes.count()} for c in poll.choices.all()]
 
         payload = {
             "poll_id": str(poll.id),
@@ -132,25 +136,70 @@ class AdminAnalyticsView(APIView):
     permission_classes = [IsAdminUser]
 
     def get(self, request):
+        now = timezone.now()
+
+        # Basic Poll Stats
         total_polls = Poll.objects.count()
         active_polls = Poll.objects.filter(is_active=True).count()
-        total_votes = Vote.objects.count()
-        todays_votes = Vote.objects.filter(created_at__date=timezone.now().date()).count()
+        closed_polls = Poll.objects.filter(end_at__lt=now).count()
+        votable_polls = Poll.objects.filter(is_active=True, start_at__lte=now).filter(
+            Q(end_at__gte=now) | Q(end_at__isnull=True)
+        ).count()
+        upcoming_polls = Poll.objects.filter(
+            is_active=True, start_at__gt=now).count()
 
-        most_voted = (
-            Poll.objects
-            .annotate(vote_count=Count("votes"))
+        # Votes
+        total_votes = Vote.objects.count()
+        todays_votes = Vote.objects.filter(created_at__date=now.date()).count()
+        unique_voters = Vote.objects.values('votelink').distinct().count()
+
+        # Poll engagement
+        most_voted_poll = (
+            Poll.objects.annotate(vote_count=Count("votes"))
             .order_by("-vote_count")
             .first()
         )
+        least_voted_poll = (
+            Poll.objects.annotate(vote_count=Count("votes"))
+            .order_by("vote_count")
+            .first()
+        )
 
-        return Response({
+        # VoteLink usage (for polls that use them)
+        total_votelinks = VoteLink.objects.count()
+        used_votelinks = VoteLink.objects.filter(used=True).count()
+        votelink_usage_percent = (
+            round(used_votelinks / total_votelinks *
+                  100, 2) if total_votelinks else 0
+        )
+
+        # Users
+        total_users = User.objects.count()
+
+        # Poll trends (optional simple example: polls created in last 7 days)
+        last_week = now - timezone.timedelta(days=7)
+        recent_polls_count = Poll.objects.filter(
+            created_at__gte=last_week).count()
+
+        data = {
             "total_polls": total_polls,
             "active_polls": active_polls,
+            "closed_polls": closed_polls,
+            "votable_polls": votable_polls,
+            "upcoming_polls": upcoming_polls,
             "total_votes": total_votes,
             "todays_votes": todays_votes,
-            "most_voted_poll": most_voted.title if most_voted else None,
-        })
+            "unique_voters": unique_voters,
+            "most_voted_poll": most_voted_poll.title if most_voted_poll else None,
+            "least_voted_poll": least_voted_poll.title if least_voted_poll else None,
+            "total_votelinks": total_votelinks,
+            "used_votelinks": used_votelinks,
+            "votelink_usage_percent": votelink_usage_percent,
+            "total_users": total_users,
+            "recent_polls_count": recent_polls_count,
+        }
+
+        return Response(data)
 
 
 class PollStatsView(APIView):
@@ -195,9 +244,8 @@ class PollByTokenView(APIView):
 
         poll = votelink.poll
         serializer = PollPublicSerializer(poll)
-        
+
         data = serializer.data
         data["has_voted"] = votelink.used
-        
-        
+
         return Response(data)
