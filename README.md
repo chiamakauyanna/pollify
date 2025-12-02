@@ -35,7 +35,7 @@ Admins can:
 
 ### Admin Dashboard Screenshot
 
-![Pollify Admin Dashboard](./screenshots/pollify-poll.png)
+![Pollify Poll Details](docs/screenshots/polify-poll.png)
 
 ---
 
