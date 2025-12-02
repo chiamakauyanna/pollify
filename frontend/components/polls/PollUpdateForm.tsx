@@ -4,21 +4,8 @@ import { updatePoll } from "@/redux/slices/pollSlice";
 import { AppDispatch } from "@/redux/store";
 import { motion, AnimatePresence } from "framer-motion";
 import { PlusIcon } from "lucide-react";
+import { ChoiceEdit, UpdateFormProps } from "@/Interfaces/interface";
 
-interface ChoiceEdit {
-  id?: string;
-  text: string;
-  votes_count?: number;
-}
-
-interface UpdateFormProps {
-  pollId: string;
-  currentTitle: string;
-  currentDescription?: string;
-  currentChoices: ChoiceEdit[];
-  onClose: () => void;
-  onUpdated: () => void;
-}
 
 const UpdatePollForm: React.FC<UpdateFormProps> = ({
   pollId,

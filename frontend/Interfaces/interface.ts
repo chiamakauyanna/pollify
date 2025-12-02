@@ -86,3 +86,35 @@ export interface CreatePollPayload {
   choices: ChoicePayload[];
 }
 
+export interface DecodedUser {
+  username: string;
+  is_staff: boolean;
+  exp?: number;
+  iat?: number;
+}
+
+export interface AdminPollManagementProps {
+  pollId?: string;
+  isCardClickable?: boolean;
+  onPollChange?: () => void; 
+}
+
+export interface ChoiceEdit {
+  id?: string;
+  text: string;
+  votes_count?: number;
+}
+
+export interface UpdateFormProps {
+  pollId: string;
+  currentTitle: string;
+  currentDescription?: string;
+  currentChoices: ChoiceEdit[];
+  onClose: () => void;
+  onUpdated: () => void;
+}
+
+export interface LoginFormProps {
+  onSubmit: (data: { username: string; password: string }) => void;
+  loading?: boolean;
+}

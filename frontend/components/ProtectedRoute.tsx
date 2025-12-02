@@ -1,19 +1,10 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/router";
 import { jwtDecode } from "jwt-decode";
+import { DecodedUser, LayoutProps } from "@/Interfaces/interface";
 
-interface Props {
-  children: React.ReactNode;
-}
 
-interface DecodedUser {
-  username: string;
-  is_staff: boolean;
-  exp?: number;
-  iat?: number;
-}
-
-export default function ProtectedRoute({ children }: Props) {
+export default function ProtectedRoute({ children }: LayoutProps) {
   const router = useRouter();
   const [verified, setVerified] = useState(false);
 

@@ -11,12 +11,8 @@ import {
 import { AppDispatch } from "@/redux/store";
 import UpdatePollForm from "./PollUpdateForm";
 import { useRouter } from "next/router";
+import { AdminPollManagementProps } from "@/Interfaces/interface";
 
-interface AdminPollManagementProps {
-  pollId?: string;
-  isCardClickable?: boolean;
-  onPollChange?: () => void; // <-- new callback prop
-}
 
 const AdminPollManagement = ({
   pollId,

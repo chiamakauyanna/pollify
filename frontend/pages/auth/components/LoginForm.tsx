@@ -1,9 +1,5 @@
+import { LoginFormProps } from "@/Interfaces/interface";
 import { useState } from "react";
-
-interface LoginFormProps {
-  onSubmit: (data: { username: string; password: string }) => void;
-  loading?: boolean;
-}
 
 const LoginForm = ({ onSubmit, loading }: LoginFormProps) => {
   const [username, setUsername] = useState("");
