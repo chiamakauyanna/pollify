@@ -21,6 +21,8 @@ from .serializers import (
     MyTokenObtainPairSerializer,
 )
 
+from django.core.mail import send_mail
+
 
 class PollViewSet(viewsets.ModelViewSet):
     """
@@ -260,3 +262,18 @@ class PollByTokenView(APIView):
         data["has_voted"] = votelink.used
 
         return Response(data)
+
+class SendBulkVoteLinksAPIView(APIView):
+    def post(self, request):
+        invitees = request.data.get("invitees", [])
+        poll_title = request.data.get("poll_title", "Poll")
+
+        for inv in invitees:
+            send_mail(
+                subject=f"You're invited to vote: {poll_title}",
+                message=f"Hi {inv['name']},\nVote here: {inv['link']}",
+                from_email="no-reply@pollify.com",
+                recipient_list=[inv["email"]],
+            )
+
+        return Response({"status": "emails sent"})
