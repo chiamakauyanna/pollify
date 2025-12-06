@@ -1,15 +1,17 @@
-from .models import Poll, Vote, VoteLink, User
+from uuid import uuid4
+
 from django.db.models import Count, Q
-from rest_framework.permissions import IsAdminUser
+from django.shortcuts import get_object_or_404
+from django.utils import timezone
+
 from rest_framework import viewsets, generics, status
 from rest_framework.response import Response
 from rest_framework.decorators import action
-from rest_framework.permissions import AllowAny
-from django.utils import timezone
-from django.db import models
-import uuid
+from rest_framework.views import APIView
+from rest_framework.permissions import AllowAny, IsAdminUser
+from rest_framework_simplejwt.views import TokenObtainPairView
 
-from .models import Poll, VoteLink, Vote
+from .models import Poll, Vote, VoteLink, User
 from .serializers import (
     PollAdminSerializer,
     PollPublicSerializer,
@@ -18,11 +20,6 @@ from .serializers import (
     PollResultsSerializer,
     MyTokenObtainPairSerializer,
 )
-from rest_framework_simplejwt.views import TokenObtainPairView
-from .permissions import IsAdminUser
-from rest_framework.views import APIView
-from django.db.models import Count
-from django.shortcuts import get_object_or_404
 
 
 class PollViewSet(viewsets.ModelViewSet):
@@ -33,12 +30,17 @@ class PollViewSet(viewsets.ModelViewSet):
     serializer_class = PollAdminSerializer
     permission_classes = [IsAdminUser]
 
-    @action(detail=True, methods=["post"], url_path="generate-vote-link", permission_classes=[IsAdminUser])
+    @action(
+        detail=True,
+        methods=["post"],
+        url_path="generate-vote-link",
+        permission_classes=[IsAdminUser]
+    )
     def generate_vote_link(self, request, pk=None):
         poll = self.get_object()
         invitee_email = request.data.get("invitee_email")
         invitee_name = request.data.get("invitee_name")
-        token = uuid.uuid4()
+        token = uuid4()
         vote_link = VoteLink.objects.create(
             poll=poll,
             token=token,
@@ -47,6 +49,42 @@ class PollViewSet(viewsets.ModelViewSet):
         )
         serializer = VoteLinkSerializer(vote_link)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+    @action(
+        detail=True,
+        methods=["post"],
+        url_path="bulk-generate-links",
+        permission_classes=[IsAdminUser]
+    )
+    def bulk_generate_links(self, request, pk=None):
+        poll = self.get_object()
+        invitees = request.data.get("invitees", [])
+
+        if not isinstance(invitees, list):
+            return Response({"error": "invitees must be a list."}, status=400)
+
+        created_links = []
+        base_url = request.build_absolute_uri("/").rstrip("/")
+
+        for person in invitees:
+            email = person.get("email")
+            name = person.get("name")
+
+            link = VoteLink.objects.create(
+                poll=poll,
+                invitee_email=email,
+                invitee_name=name,
+                token=uuid4(),
+            )
+
+            created_links.append({
+                "token": str(link.token),
+                "email": email,
+                "name": name,
+                "url": f"{base_url}/vote/{link.token}"
+            })
+
+        return Response({"links": created_links}, status=201)
 
 
 class PublicPollDetailView(generics.RetrieveAPIView):
@@ -58,19 +96,16 @@ class PublicPollDetailView(generics.RetrieveAPIView):
 class VoteCreateView(generics.CreateAPIView):
     """
     Submit a vote via a VoteLink.
-    The frontend should post { token: "<votelink>", choice_id: "<choice_uuid>" }.
-    This view maps those keys into the VoteSerializer fields (votelink, choice).
+    Frontend should post { token: "<votelink>", choice_id: "<choice_uuid>" }.
     """
     permission_classes = [AllowAny]
     serializer_class = VoteSerializer
 
     def post(self, request, *args, **kwargs):
-        # Map frontend keys to serializer fields
         data = {
             "votelink": request.data.get("token"),
             "choice": request.data.get("choice_id"),
         }
-
         serializer = self.get_serializer(data=data)
         serializer.is_valid(raise_exception=True)
         serializer.save()
@@ -79,7 +114,8 @@ class VoteCreateView(generics.CreateAPIView):
 
 class PollListView(generics.ListAPIView):
     """
-    Public: active polls for voting. Only returns polls that are active and currently open.
+    Public: active polls for voting.
+    Only returns polls that are active and currently open.
     """
     queryset = Poll.objects.all()
     serializer_class = PollPublicSerializer
@@ -88,9 +124,7 @@ class PollListView(generics.ListAPIView):
     def get_queryset(self):
         now = timezone.now()
         qs = Poll.objects.filter(is_active=True, start_at__lte=now)
-        # include polls where end_at is either null (no end) or in the future
-        qs = qs.filter(models.Q(end_at__gte=now) |
-                       models.Q(end_at__isnull=True))
+        qs = qs.filter(Q(end_at__gte=now) | Q(end_at__isnull=True))
         return qs.order_by("-created_at")
 
 
@@ -115,8 +149,10 @@ class PollResultsView(generics.RetrieveAPIView):
         if not poll.show_results:
             return Response({"error": "Results are not available yet."}, status=status.HTTP_403_FORBIDDEN)
 
-        results = [{"choice_id": str(
-            c.id), "text": c.text, "votes": c.votes.count()} for c in poll.choices.all()]
+        results = [
+            {"choice_id": str(c.id), "text": c.text, "votes": c.votes.count()}
+            for c in poll.choices.all()
+        ]
 
         payload = {
             "poll_id": str(poll.id),
@@ -138,48 +174,28 @@ class AdminAnalyticsView(APIView):
     def get(self, request):
         now = timezone.now()
 
-        # Basic Poll Stats
         total_polls = Poll.objects.count()
         active_polls = Poll.objects.filter(is_active=True).count()
         closed_polls = Poll.objects.filter(end_at__lt=now).count()
         votable_polls = Poll.objects.filter(is_active=True, start_at__lte=now).filter(
             Q(end_at__gte=now) | Q(end_at__isnull=True)
         ).count()
-        upcoming_polls = Poll.objects.filter(
-            is_active=True, start_at__gt=now).count()
+        upcoming_polls = Poll.objects.filter(is_active=True, start_at__gt=now).count()
 
-        # Votes
         total_votes = Vote.objects.count()
         todays_votes = Vote.objects.filter(created_at__date=now.date()).count()
         unique_voters = Vote.objects.values('votelink').distinct().count()
 
-        # Poll engagement
-        most_voted_poll = (
-            Poll.objects.annotate(vote_count=Count("votes"))
-            .order_by("-vote_count")
-            .first()
-        )
-        least_voted_poll = (
-            Poll.objects.annotate(vote_count=Count("votes"))
-            .order_by("vote_count")
-            .first()
-        )
+        most_voted_poll = Poll.objects.annotate(vote_count=Count("votes")).order_by("-vote_count").first()
+        least_voted_poll = Poll.objects.annotate(vote_count=Count("votes")).order_by("vote_count").first()
 
-        # VoteLink usage (for polls that use them)
         total_votelinks = VoteLink.objects.count()
         used_votelinks = VoteLink.objects.filter(used=True).count()
-        votelink_usage_percent = (
-            round(used_votelinks / total_votelinks *
-                  100, 2) if total_votelinks else 0
-        )
+        votelink_usage_percent = round((used_votelinks / total_votelinks) * 100, 2) if total_votelinks else 0
 
-        # Users
         total_users = User.objects.count()
-
-        # Poll trends (optional simple example: polls created in last 7 days)
         last_week = now - timezone.timedelta(days=7)
-        recent_polls_count = Poll.objects.filter(
-            created_at__gte=last_week).count()
+        recent_polls_count = Poll.objects.filter(created_at__gte=last_week).count()
 
         data = {
             "total_polls": total_polls,
@@ -207,14 +223,11 @@ class PollStatsView(APIView):
 
     def get(self, request, pk):
         poll = get_object_or_404(Poll, pk=pk)
-        data = []
-        for choice in poll.choices.all():
-            data.append({
-                "choice_id": str(choice.id),
-                "text": choice.text,
-                "votes": choice.votes.count(),
-            })
-        return Response({"poll": poll.title, "stats": data})
+        stats = [
+            {"choice_id": str(c.id), "text": c.text, "votes": c.votes.count()}
+            for c in poll.choices.all()
+        ]
+        return Response({"poll": poll.title, "stats": stats})
 
 
 class PublicClosedPollsView(generics.ListAPIView):
@@ -230,7 +243,7 @@ class PollByTokenView(APIView):
     Get poll details by vote link token.
     Frontend calls this to render the poll page.
     """
-    permission_classes = []  # AllowAny
+    permission_classes = [AllowAny]
 
     def get(self, request):
         token = request.query_params.get("token")
@@ -243,9 +256,7 @@ class PollByTokenView(APIView):
             return Response({"error": "Invalid token."}, status=status.HTTP_404_NOT_FOUND)
 
         poll = votelink.poll
-        serializer = PollPublicSerializer(poll)
-
-        data = serializer.data
+        data = PollPublicSerializer(poll).data
         data["has_voted"] = votelink.used
 
         return Response(data)
