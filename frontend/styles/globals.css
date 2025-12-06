@@ -1,19 +1,18 @@
 @import "tailwindcss";
-@import url("https://fonts.googleapis.com/css2?family=Fredoka:wght@300..700&family=Nunito:ital,wght@0,200..1000;1,200..1000&display=swap");
 
 @theme {
-  --color-primary: #7B1FA2;        /* vibrant purple */
-  --color-secondary: #BA68C8;      /* lighter purple accent */
+  --color-primary: #7b1fa2; /* vibrant purple */
+  --color-secondary: #ba68c8; /* lighter purple accent */
   --color-background: #f8f8f8;
   --color-text: #444444;
   --color-secondary-text: #757575;
-  --color-border: #BDBDBD;
-  --color-hover: #6A1B9A;          /* darker purple for hover */
+  --color-border: #bdbdbd;
+  --color-hover: #6a1b9a; /* darker purple for hover */
 }
 
 /* Global Styles */
 body {
-  font-family: "Nunito", sans-serif;
+  font-family: var(--font-nunito), sans-serif;
   background-color: var(--color-background);
   color: var(--color-text);
 }
@@ -25,7 +24,7 @@ h3,
 h4,
 h5,
 h6 {
-  font-family: "Fredoka", sans-serif;
+  font-family: var(--font-fredoka), sans-serif;
   color: var(--color-primary);
 }
 
@@ -33,7 +32,7 @@ h6 {
 .button-primary {
   background-color: var(--color-primary);
   color: white;
-  font-family: "Fredoka", sans-serif;
+  font-family: var(--font-fredoka), sans-serif;
 }
 
 .button-primary:hover {
@@ -44,12 +43,10 @@ h6 {
   background-color: white;
   border: 2px solid var(--color-border);
   color: var(--color-primary);
-  font-family: "Fredoka", sans-serif;
+  font-family: var(--font-fredoka), sans-serif;
 }
 
 .button-secondary:hover {
   border-color: var(--color-hover);
   color: var(--color-hover);
 }
-
-
