@@ -13,7 +13,6 @@ import UpdatePollForm from "./PollUpdateForm";
 import { useRouter } from "next/router";
 import { AdminPollManagementProps } from "@/Interfaces/interface";
 
-
 const AdminPollManagement = ({
   pollId,
   isCardClickable = false,
@@ -29,6 +28,10 @@ const AdminPollManagement = ({
   const [mounted, setMounted] = useState(false);
   const [editingPollId, setEditingPollId] = useState<string | null>(null);
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
+
+  // New states for card click feedback
+  const [activeCardId, setActiveCardId] = useState<string | null>(null);
+  const [loadingCardId, setLoadingCardId] = useState<string | null>(null);
 
   useEffect(() => {
     if (!pollId) {
@@ -51,16 +54,23 @@ const AdminPollManagement = ({
     dispatch(fetchPolls());
     onPollChange?.(); // <-- also trigger parent refresh if needed
   };
+
   const confirmDelete = async () => {
     if (!confirmDeleteId) return;
     await dispatch(deletePoll(confirmDeleteId));
     setConfirmDeleteId(null);
     if (pollId) {
-      router.push("/dashboard/polls"); // or wherever your poll list is
+      router.push("/dashboard/polls");
     } else {
-      // Refresh list if we're on the list page
       dispatch(fetchPolls());
     }
+  };
+
+  const handleCardClick = (id: string) => {
+    if (!isCardClickable) return;
+    setActiveCardId(id);
+    setLoadingCardId(id);
+    router.push(`/dashboard/polls/${id}`);
   };
 
   if (!mounted || loading) return <Loader />;
@@ -81,17 +91,28 @@ const AdminPollManagement = ({
           onClose={() => setConfirmDeleteId(null)}
         />
       )}
+
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
         {polls.map((poll) => (
           <div
             key={poll.id}
-            className={`bg-white rounded-xl shadow p-4 space-y-3 cursor-pointer transition hover:shadow-md ${
+            className={`relative bg-white rounded-xl shadow p-4 space-y-3 cursor-pointer transition hover:shadow-md ${
               isCardClickable ? "hover:bg-gray-50" : ""
+            } ${activeCardId === poll.id ? "bg-gray-200" : ""} ${
+              loadingCardId === poll.id ? "opacity-50 pointer-events-none" : ""
             }`}
-            onClick={() =>
-              isCardClickable && router.push(`/dashboard/polls/${poll.id}`)
-            }
+            onMouseDown={() => isCardClickable && setActiveCardId(poll.id)}
+            onMouseUp={() => isCardClickable && setActiveCardId(null)}
+            onMouseLeave={() => isCardClickable && setActiveCardId(null)}
+            onClick={() => handleCardClick(poll.id)}
           >
+            {/* Optional Loading Overlay */}
+            {loadingCardId === poll.id && (
+              <div className="absolute inset-0 bg-gray-100 bg-opacity-50 flex items-center justify-center rounded-xl z-10">
+                <Loader />
+              </div>
+            )}
+
             {/* Header */}
             <div className="flex justify-between items-center mb-1">
               <h3 className="font-bold text-lg truncate">{poll.title}</h3>

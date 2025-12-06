@@ -34,6 +34,19 @@ export const PollService = {
     return res.data;
   },
 
+  bulkGenerateVoteLinks: async (pollId: string, invitees: { email: string; name: string }[]) => {
+    const res = await adminApi.post(`/polls/${pollId}/bulk-generate-links/`, { invitees });
+    return res.data;
+  },
+
+   sendBulkVoteEmails: async (pollTitle: string, invitees: { name: string; email: string; link: string }[]) => {
+    const res = await adminApi.post(`/polls/send-bulk-vote-links/`, {
+      poll_title: pollTitle,
+      invitees,
+    });
+    return res.data;
+  },
+
   getPollStats: async (pollId: string) => {
     const res = await adminApi.get(`/polls/${pollId}/stats/`);
     return res.data;

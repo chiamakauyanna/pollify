@@ -140,7 +140,7 @@ Voters do **not** require accounts.
 POST /token/
 {
   "username": "Alex",
-  "password": "Alex1234"
+  "password": "Alex1234!"
 }
 ```
 

@@ -68,6 +68,7 @@ export interface PollState {
   adminAnalytics: any;
   results: Result | null;
   generatedLink: string | null;
+  bulkGeneratedLinks: { token: string }[];   
   successMessage: string | null;
   loading: boolean;
   error: string | null;
@@ -117,4 +118,12 @@ export interface UpdateFormProps {
 export interface LoginFormProps {
   onSubmit: (data: { username: string; password: string }) => void;
   loading?: boolean;
+
+  // Controlled input values
+  username: string;
+  password: string;
+
+  // Setters for controlled inputs
+  setUsername: (value: string) => void;
+  setPassword: (value: string) => void;
 }

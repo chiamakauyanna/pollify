@@ -15,6 +15,14 @@ export const selectPollError = (state: RootState) => state.polls.error;
 export const selectPollSuccessMessage = (state: RootState) => state.polls.successMessage;
 export const selectGeneratedLink = (state: RootState) => state.polls.generatedLink;
 
+// ---- Bulk vote links ----
+export const selectBulkGeneratedLinks = (state: RootState) => state.polls.bulkGeneratedLinks || [];
+export const selectBulkEmailSuccess = (state: RootState) =>
+  state.polls.successMessage === "Emails sent successfully!"
+    ? state.polls.successMessage
+    : null;
+
+
 // ---- Derived / Helper Selectors ----
 
 // Get choices of current poll

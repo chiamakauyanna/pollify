@@ -1,5 +1,6 @@
 import { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
+import { useRouter } from "next/router";
 import AppLayout from "@/components/layouts/app/AppLayout";
 import Loader from "@/components/common/Loader";
 import Toast from "@/components/common/Toast";
@@ -11,6 +12,7 @@ import {
   selectPollError,
 } from "@/redux/selectors/pollSelectors";
 import { AppDispatch } from "@/redux/store";
+import { Plus } from "lucide-react";
 
 export default function AdminDashboard() {
   const dispatch = useDispatch<AppDispatch>();
@@ -18,6 +20,7 @@ export default function AdminDashboard() {
   const adminAnalytics = useSelector(selectAdminAnalytics);
   const loading = useSelector(selectPollLoading);
   const error = useSelector(selectPollError);
+  const router = useRouter();
 
   useEffect(() => {
     dispatch(fetchPolls());
@@ -30,13 +33,23 @@ export default function AdminDashboard() {
     <AppLayout>
       <div className="space-y-12 mt-12">
         {/* Page Title */}
-        <div className="flex flex-col justify-between items-start gap-4">
-          <h1 className="text-xl md:text-2xl lg:text-3xl font-semibold">
-            Admin Dashboard
-          </h1>
-          <p className="text-secondary-text">
-            Welcome back! Here’s a quick overview of your polls and analytics.
-          </p>
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 lg:px-12 md:px-4">
+          <div>
+            <h1 className="text-xl md:text-2xl lg:text-3xl font-semibold">
+              Admin Dashboard
+            </h1>
+            <p className="text-secondary-text">
+              Welcome back! Here’s a quick overview of your polls and analytics.
+            </p>
+          </div>
+
+          <button
+            onClick={() => router.push("/polls/create")}
+            className="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-lg shadow hover:bg-secondary transition"
+          >
+            <Plus className="w-5 h-5" />
+            <span>Create Poll</span>
+          </button>
         </div>
 
         {error && <Toast message={error} type="error" />}

@@ -62,7 +62,7 @@ const AdminSidebar: React.FC = () => {
               </span>
 
               {/* Label only when open */}
-              {isOpen && <span>{item.name}</span>}
+              {isOpen && <span className="md:text-sm whitespace-nowrap lg:text-lg">{item.name}</span>}
             </Link>
           ))}
         </nav>

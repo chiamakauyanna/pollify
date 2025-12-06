@@ -52,6 +52,32 @@ export const generateVoteLink = createAsyncThunk(
   }
 );
 
+export const bulkGenerateVoteLinks = createAsyncThunk(
+  "polls/bulkGenerateVoteLinks",
+  async ({
+    pollId,
+    invitees,
+  }: {
+    pollId: string;
+    invitees: { email: string; name: string }[];
+  }) => {
+    return await PollService.bulkGenerateVoteLinks(pollId, invitees);
+  }
+);
+
+export const sendBulkVoteEmails = createAsyncThunk(
+  "polls/sendBulkVoteEmails",
+  async ({
+    pollTitle,
+    invitees,
+  }: {
+    pollTitle: string;
+    invitees: { name: string; email: string; link: string }[];
+  }) => {
+    return await PollService.sendBulkVoteEmails(pollTitle, invitees);
+  }
+);
+
 // Public
 export const fetchPublicPolls = createAsyncThunk("polls/public", async () => {
   return await PollService.getPublicPolls();
@@ -116,6 +142,7 @@ const initialState: PollState = {
   pollStats: null,
   adminAnalytics: null,
   generatedLink: null,
+  bulkGeneratedLinks: [],
   successMessage: null,
   loading: false,
   error: null,
@@ -165,6 +192,24 @@ const pollSlice = createSlice({
         state.loading = false;
         state.generatedLink = action.payload;
         state.successMessage = "Vote link generated";
+      })
+      .addCase(bulkGenerateVoteLinks.fulfilled, (state, action) => {
+        state.loading = false;
+        state.bulkGeneratedLinks = action.payload.links;
+        state.successMessage = "Bulk vote links generated!";
+      })
+      .addCase(sendBulkVoteEmails.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(sendBulkVoteEmails.fulfilled, (state) => {
+        state.loading = false;
+        state.successMessage = "Emails sent successfully!";
+        state.generatedLink = null;
+      })
+      .addCase(sendBulkVoteEmails.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.error?.message || "Failed to send emails";
       });
 
     // Public

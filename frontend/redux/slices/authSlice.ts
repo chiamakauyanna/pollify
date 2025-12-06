@@ -6,11 +6,13 @@ import { clearTokens } from "../../utils/tokenManager";
 interface AuthState {
   loading: boolean;
   error: string | null;
+  successMessage: string | null;
 }
 
 const initialState: AuthState = {
   loading: false,
   error: null,
+  successMessage: null,
 };
 
 // ----------------------------
@@ -46,6 +48,7 @@ const authSlice = createSlice({
       clearTokens();
       state.loading = false;
       state.error = null;
+      state.successMessage = null;
     },
   },
 
@@ -55,8 +58,10 @@ const authSlice = createSlice({
         state.loading = true;
         state.error = null;
       })
-      .addCase(LoginThunk.fulfilled, (state, action) => {
+      .addCase(LoginThunk.fulfilled, (state) => {
         state.loading = false;
+        state.error = null;
+        state.successMessage = "Login successful! Redirecting to dashboard…";
       })
       .addCase(LoginThunk.rejected, (state, action) => {
         state.loading = false;

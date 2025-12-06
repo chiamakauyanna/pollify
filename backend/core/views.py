@@ -21,7 +21,7 @@ from .serializers import (
     MyTokenObtainPairSerializer,
 )
 
-from django.core.mail import send_mail
+from django.core.mail import send_mail, BadHeaderError
 
 
 class PollViewSet(viewsets.ModelViewSet):
@@ -182,22 +182,27 @@ class AdminAnalyticsView(APIView):
         votable_polls = Poll.objects.filter(is_active=True, start_at__lte=now).filter(
             Q(end_at__gte=now) | Q(end_at__isnull=True)
         ).count()
-        upcoming_polls = Poll.objects.filter(is_active=True, start_at__gt=now).count()
+        upcoming_polls = Poll.objects.filter(
+            is_active=True, start_at__gt=now).count()
 
         total_votes = Vote.objects.count()
         todays_votes = Vote.objects.filter(created_at__date=now.date()).count()
         unique_voters = Vote.objects.values('votelink').distinct().count()
 
-        most_voted_poll = Poll.objects.annotate(vote_count=Count("votes")).order_by("-vote_count").first()
-        least_voted_poll = Poll.objects.annotate(vote_count=Count("votes")).order_by("vote_count").first()
+        most_voted_poll = Poll.objects.annotate(
+            vote_count=Count("votes")).order_by("-vote_count").first()
+        least_voted_poll = Poll.objects.annotate(
+            vote_count=Count("votes")).order_by("vote_count").first()
 
         total_votelinks = VoteLink.objects.count()
         used_votelinks = VoteLink.objects.filter(used=True).count()
-        votelink_usage_percent = round((used_votelinks / total_votelinks) * 100, 2) if total_votelinks else 0
+        votelink_usage_percent = round(
+            (used_votelinks / total_votelinks) * 100, 2) if total_votelinks else 0
 
         total_users = User.objects.count()
         last_week = now - timezone.timedelta(days=7)
-        recent_polls_count = Poll.objects.filter(created_at__gte=last_week).count()
+        recent_polls_count = Poll.objects.filter(
+            created_at__gte=last_week).count()
 
         data = {
             "total_polls": total_polls,
@@ -264,16 +269,36 @@ class PollByTokenView(APIView):
         return Response(data)
 
 class SendBulkVoteLinksAPIView(APIView):
+    permission_classes = [IsAdminUser] 
+
     def post(self, request):
         invitees = request.data.get("invitees", [])
         poll_title = request.data.get("poll_title", "Poll")
+        sent_emails = []
+
+        if not isinstance(invitees, list):
+            return Response({"error": "Invitees must be a list."}, status=status.HTTP_400_BAD_REQUEST)
 
         for inv in invitees:
-            send_mail(
-                subject=f"You're invited to vote: {poll_title}",
-                message=f"Hi {inv['name']},\nVote here: {inv['link']}",
-                from_email="no-reply@pollify.com",
-                recipient_list=[inv["email"]],
-            )
+            name = inv.get("name", "Guest")
+            email = inv.get("email")
+            link = inv.get("link")
 
-        return Response({"status": "emails sent"})
+            if not email or not link:
+                continue  # skip invalid entries
+
+            try:
+                send_mail(
+                    subject=f"You're invited to vote: {poll_title}",
+                    message=f"Hi {name},\nVote here: {link}",
+                    from_email="no-reply@pollify.com",
+                    recipient_list=[email],
+                    fail_silently=False,  # raise errors if any
+                )
+                sent_emails.append(email)
+            except BadHeaderError:
+                return Response({"error": "Invalid header found."}, status=status.HTTP_400_BAD_REQUEST)
+            except Exception as e:
+                return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+        return Response({"status": "emails sent", "sent_emails": sent_emails})

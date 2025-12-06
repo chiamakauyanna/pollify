@@ -36,18 +36,26 @@ const Toast: React.FC<ToastProps> = ({
 
   return (
     <div
-      className={`px-4 py-3 rounded-lg text-white shadow-md flex justify-between items-center space-x-4`}
+      className={`${bgColor} px-4 py-3 rounded-lg text-white shadow-md flex justify-between items-center space-x-4 fixed top-5 right-5 z-50 min-w-[250px]`}
       role="alert"
     >
-      <span>{message}</span>
-      {actionLabel && onAction && (
+      <span className="truncate">{message}</span>
+      <div className="flex gap-2">
+        {actionLabel && onAction && (
+          <button
+            onClick={onAction}
+            className="bg-white text-black px-3 py-1 rounded hover:bg-gray-200"
+          >
+            {actionLabel}
+          </button>
+        )}
         <button
-          onClick={onAction}
-          className="bg-white text-black px-3 py-1 rounded hover:bg-gray-200"
+          onClick={onClose}
+          className="bg-white text-black px-2 py-1 rounded hover:bg-gray-200"
         >
-          {actionLabel}
+          ✕
         </button>
-      )}
+      </div>
     </div>
   );
 };

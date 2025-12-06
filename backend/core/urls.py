@@ -12,6 +12,7 @@ from .views import (
     PollStatsView,
     PublicClosedPollsView,
     PollByTokenView,
+    SendBulkVoteLinksAPIView,
 )
 
 router = DefaultRouter()
@@ -29,6 +30,7 @@ urlpatterns = [
     path("poll-results/", PollResultsView.as_view(), name="poll-results"),
     path("public-closed-polls/", PublicClosedPollsView.as_view(), name="public-closed-polls"),
     path("polls/by-token/", PollByTokenView.as_view(), name="poll-by-token"),
+    path("polls/send-bulk-vote-links/", SendBulkVoteLinksAPIView.as_view(), name="send-bulk-vote-links"),
 
     # Admin analytics & stats
     path("admin/analytics/", AdminAnalyticsView.as_view(), name="admin-analytics"),
