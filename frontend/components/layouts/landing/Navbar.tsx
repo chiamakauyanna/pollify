@@ -9,7 +9,7 @@ const Navbar = () => {
 
       <div className="space-x-4">
           <Link href="/auth/login">
-            <p className="button-primary px-3 py-1 rounded">Login</p>
+            <p className="button-primary px-3 py-1 rounded">Get Started</p>
           </Link>
       </div>
     </nav>

@@ -5,47 +5,61 @@ import Features from "@/components/landingSection/Features";
 import Link from "next/link";
 import Header from "@/components/layouts/landing/Header";
 import Footer from "@/components/layouts/landing/Footer";
+import UseCase from "@/components/landingSection/UseCase";
+import CTA from "@/components/landingSection/CTA";
+import FAQ from "@/components/landingSection/FAQ";
 
 export default function Home() {
   return (
     <>
       <Header />
       <section className="">
-        <div className="flex lg:gap-12 md:gap-3 gap-8 lg:px-12 md:px-10 px-8 justify-center h-screen items-center relative lg:flex-row md:flex-row flex-col">
-          <div className="lg:p-6 md:p-6 p-2 lg:mr-24 ">
-            <div className="max-w-md">
-              <h2 className="text-primary lg:text-3xl md:text-2xl text-xl mb-4 font-bold md:text-left text-center">
-                Revolutionizing Online Polling
-              </h2>
-              <p className="text-sm md:text-base font-semibold md:text-left text-center">
-                Fast, secure, and interactive polling at your fingertips. Have
-                your say and watch results update live!
-              </p>
-            </div>
-            <div className="text-center md:text-left lg:text-left">
-              <Link href="/dashboard">
-                <Button className="button-primary py-3 px-8 mt-4 font-medium">
-                  Get Started
+        <div className="flex lg:gap-12 gap-16 lg:px-10 md:px-12 px-8 h-full lg:h-screen justify-center items-center relative lg:flex-row flex-col md:py-32">
+          {/* Left Content */}
+          <div className="max-w-xl lg:text-left text-center">
+            <p className="lg:text-5xl md:text-4xl text-3xl font-bold mb-4 leading-tight">
+              Create Secure Polls in Seconds with{" "}
+              <span className="text-primary">Pollify</span>
+            </p>
+            <p className="text-sm md:text-base font-medium">
+              Simple, secure, and real-time polling for teams, schools,
+              communities, and online groups. No sign-up required for voters.
+            </p>
+
+            <div className="mt-6 md:mt-12">
+              <Link href="/auth/login">
+                <Button className="button-primary py-3 px-8">
+                  Create Poll
                 </Button>
               </Link>
             </div>
           </div>
-          <div className="lg:flex md:flex shadow-lg p-2 shadow-primary">
+
+          {/* Right Illustration */}
+          <div className="lg:flex md:flex rounded-xl gap-4">
             <Image
-              src="/images/voting-img.svg"
-              alt="animated picture of a lady voting"
-              width={300}
-              height={300}
-              className="md:w-96 xl:w-[450px] h-auto"
+              src="/screenshots/pollify_dashboard.png"
+              alt="Illustration of online polling"
+              width={380}
+              height={380}
+              className="md:w-[500px] xl:w-[550px] h-auto shadow-lg shadow-primary "
+            />
+            <Image
+              src="/screenshots/pollify_details.png"
+              alt="Illustration of online polling"
+              width={380}
+              height={380}
+              className="md:w-[150px] xl:w-[155px] h-auto shadow-lg shadow-primary "
             />
           </div>
         </div>
         <Steps />
         <Features />
+        <UseCase />
+        <CTA />
+        <FAQ />
       </section>
       <Footer />
     </>
   );
 }
-
-Home.noLayout = true;

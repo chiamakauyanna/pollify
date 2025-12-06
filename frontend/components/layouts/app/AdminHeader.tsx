@@ -3,7 +3,7 @@ import { toggleSidebar, selectSidebarState } from "@/redux/slices/sidebarSlice";
 import { logout } from "@/redux/slices/authSlice";
 import { HiArrowLongLeft, HiArrowLongRight } from "react-icons/hi2";
 import { useRouter } from "next/router";
-import { LogOutIcon } from "lucide-react";
+import { LogOutIcon, MenuIcon } from "lucide-react";
 
 const AdminHeader = () => {
   const dispatch = useDispatch();
@@ -22,7 +22,7 @@ const AdminHeader = () => {
         className="text-2xl focus:outline-none"
         onClick={() => dispatch(toggleSidebar())}
       >
-        {!isSidebarOpen ? <HiArrowLongRight size={28} /> : <HiArrowLongLeft />}
+        {!isSidebarOpen ? <MenuIcon size={28} /> : <HiArrowLongRight />}
       </button>
 
       {/* Right Side - Admin Info + Logout */}

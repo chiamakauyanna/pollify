@@ -6,9 +6,10 @@ const Footer = () => {
   useEffect(() => {
     setYear(new Date().getFullYear());
   }, []);
+
   return (
-    <footer className="flex justify-center py-6 bg-primary">
-      <p className="text-sm text-background">{`© ${year}. All Rights Reserved.`}</p>
+    <footer className="flex justify-center py-6 bg-primary mt-20">
+      <p className="text-sm text-background">{`© ${year} Pollify. All Rights Reserved.`}</p>
     </footer>
   );
 };
