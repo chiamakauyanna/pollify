@@ -2,11 +2,11 @@ import { CheckCircle, Share2, BarChart2, VoteIcon } from "lucide-react";
 
 const Steps = () => {
   return (
-    <div className="flex justify-center mt-20 px-6">
-      <div className="bg-primary/25 w-full lg:w-4/5 py-14 px-8 backdrop-blur-sm border border-primary/20">
-        <h2 className="text-center text-2xl md:text-3xl font-bold text-primary mb-10">
+    <div className="flex justify-center mt-20 px-6 bg-primary ">
+      <div className="w-full lg:w-4/5 py-14 px-8 backdrop-blur-sm border border-primary/20">
+        <p className="text-center text-2xl md:text-3xl font-bold mb-10 text-gray-100">
           How Pollify Works
-        </h2>
+        </p>
 
         <div className="grid lg:grid-cols-3 md:grid-cols-2 grid-cols-1 gap-10">
           {/* Step 1 */}
