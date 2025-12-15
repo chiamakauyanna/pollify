@@ -1,2 +1,4 @@
 # Django development email files
 sent_emails/
+venv/
+.env
