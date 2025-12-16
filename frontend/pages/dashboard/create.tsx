@@ -7,7 +7,6 @@ export default function CreatePollPage() {
   const [showTips, setShowTips] = useState(true);
 
   return (
-    <AppLayout>
       <div className="max-w-6xl mx-auto space-y-6 px-4">
         {/* Page Title */}
         <h1 className="text-xl md:text-2xl lg:text-3xl font-bold text-primary">
@@ -48,6 +47,7 @@ export default function CreatePollPage() {
           </div>
         </div>
       </div>
-    </AppLayout>
   );
 }
+
+CreatePollPage.getLayout = (page: React.ReactNode) => <AppLayout>{page}</AppLayout>;

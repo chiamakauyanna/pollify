@@ -16,7 +16,7 @@ export default function Home() {
       <section className="">
         <div className="flex lg:gap-12 gap-16 lg:px-10 md:px-12 px-8 h-full lg:h-screen justify-center items-center relative lg:flex-row flex-col md:py-32">
           {/* Left Content */}
-          <div className="max-w-xl lg:text-left text-center">
+          <div className="max-w-lg lg:text-left text-center mt-32 md:mt-0">
             <p className="lg:text-5xl md:text-4xl text-3xl font-bold mb-4 leading-tight">
               Create Secure Polls in Seconds with{" "}
               <span className="text-primary">Pollify</span>
@@ -36,13 +36,13 @@ export default function Home() {
           </div>
 
           {/* Right Illustration */}
-          <div className="flex md:flex-row flex-col rounded-xl gap-4 items-center">
+          <div className="flex flex-row rounded-xl gap-4 items-center">
             <Image
               src="/screenshots/pollify_dashboard.png"
               alt="Illustration of online polling"
-              width={380}
-              height={380}
-              className="md:w-[500px] xl:w-[550px] h-auto shadow-lg shadow-primary"
+              width={250}
+              height={250}
+              className="md:w-[400px] xl:w-[550px] h-auto shadow-lg shadow-primary"
               loading="eager"
             />
             <Image
@@ -50,7 +50,7 @@ export default function Home() {
               alt="Illustration of online polling"
               width={100}
               height={100}
-              className="md:w-[150px] xl:w-[155px] h-auto shadow-lg shadow-primary"
+              className="w-18 md:w-[150px] xl:w-[155px] md:h-[150px] h-[120px] shadow-lg shadow-primary -ml-6"
               loading="eager"
             />
           </div>

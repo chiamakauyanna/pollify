@@ -30,7 +30,6 @@ export default function AdminDashboard() {
   if (loading) return <Loader />;
 
   return (
-    <AppLayout>
       <div className="space-y-12 mt-12">
         {/* Page Title */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 lg:px-12 md:px-4">
@@ -156,6 +155,7 @@ export default function AdminDashboard() {
           </div>
         </div>
       </div>
-    </AppLayout>
   );
 }
+
+AdminDashboard.getLayout = (page: React.ReactNode) => <AppLayout>{page}</AppLayout>;

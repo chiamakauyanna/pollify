@@ -3,8 +3,6 @@ import { useDispatch, useSelector } from "react-redux";
 import { useRouter } from "next/router";
 import { motion } from "framer-motion";
 import { ArrowLeft, Copy, CheckCircle, XCircle } from "lucide-react";
-
-import AppLayout from "@/components/layouts/app/AppLayout";
 import AdminPollManagement from "@/components/polls/AdminPollManagement";
 import Loader from "@/components/common/Loader";
 import Toast from "@/components/common/Toast";
@@ -25,6 +23,7 @@ import {
   selectPollError,
   selectBulkGeneratedLinks,
 } from "@/redux/selectors/pollSelectors";
+import AppLayout from "@/components/layouts/app/AppLayout";
 
 const progressColors = [
   "bg-blue-500",
@@ -169,9 +168,9 @@ export default function PollDetailsPage() {
 
   if (loading || !poll || !stats) {
     return (
-      <AppLayout>
+      <div>
         <Loader />
-      </AppLayout>
+      </div>
     );
   }
 
@@ -179,7 +178,7 @@ export default function PollDetailsPage() {
     stats.stats.reduce((sum: number, c: any) => sum + c.votes, 0) || 1;
 
   return (
-    <AppLayout>
+    <div>
       {error && <Toast message={error} type="error" />}
       {toastMessage && (
         <Toast
@@ -365,6 +364,10 @@ export default function PollDetailsPage() {
           }}
         />
       </div>
-    </AppLayout>
+    </div>
   );
 }
+
+PollDetailsPage.getLayout = (page: React.ReactNode) => <AppLayout>{page}</AppLayout>;
+
+
