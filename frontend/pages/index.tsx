@@ -36,20 +36,22 @@ export default function Home() {
           </div>
 
           {/* Right Illustration */}
-          <div className="lg:flex md:flex rounded-xl gap-4">
+          <div className="flex md:flex-row flex-col rounded-xl gap-4 items-center">
             <Image
               src="/screenshots/pollify_dashboard.png"
               alt="Illustration of online polling"
               width={380}
               height={380}
-              className="md:w-[500px] xl:w-[550px] h-auto shadow-lg shadow-primary "
+              className="md:w-[500px] xl:w-[550px] h-auto shadow-lg shadow-primary"
+              loading="eager"
             />
             <Image
               src="/screenshots/pollify_details.png"
               alt="Illustration of online polling"
-              width={380}
-              height={380}
-              className="md:w-[150px] xl:w-[155px] h-auto shadow-lg shadow-primary "
+              width={100}
+              height={100}
+              className="md:w-[150px] xl:w-[155px] h-auto shadow-lg shadow-primary"
+              loading="eager"
             />
           </div>
         </div>
