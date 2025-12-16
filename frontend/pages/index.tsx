@@ -50,7 +50,7 @@ export default function Home() {
               alt="Illustration of online polling"
               width={100}
               height={100}
-              className="w-18 md:w-[150px] xl:w-[155px] md:h-[300px] h-[130px] shadow-lg shadow-primary -ml-6"
+              className="w-18 md:w-[150px] xl:w-[155px] md:h-[270px] h-[130px] shadow-lg shadow-primary -ml-6"
               loading="eager"
             />
           </div>
