@@ -1,4 +1,5 @@
 import { LoginFormProps } from "@/Interfaces/interface";
+import { FiUser, FiLock } from "react-icons/fi";
 
 const LoginForm = ({
   username,
@@ -16,7 +17,12 @@ const LoginForm = ({
   return (
     <form onSubmit={handleSubmit} className="space-y-8">
       <div>
-        <label htmlFor="username" className="block text-sm font-medium text-gray-600">Username</label>
+        <label
+          htmlFor="username"
+          className="flex items-center text-sm font-medium text-gray-600"
+        >
+          <FiUser className="mr-2" /> Username
+        </label>
         <input
           type="text"
           value={username}
@@ -28,7 +34,12 @@ const LoginForm = ({
       </div>
 
       <div>
-        <label htmlFor="password" className="block text-sm font-medium text-gray-600">Password</label>
+        <label
+          htmlFor="password"
+          className="flex items-center text-sm font-medium text-gray-600"
+        >
+          <FiLock className="mr-2" /> Password
+        </label>
         <input
           type="password"
           value={password}
