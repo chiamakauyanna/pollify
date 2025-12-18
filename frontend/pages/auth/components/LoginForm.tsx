@@ -16,24 +16,26 @@ const LoginForm = ({
   return (
     <form onSubmit={handleSubmit} className="space-y-8">
       <div>
+        <label htmlFor="username" className="block text-sm font-medium text-gray-600">Username</label>
         <input
           type="text"
           value={username}
           onChange={(e) => setUsername(e.target.value)}
-          placeholder="Username"
+          id="username"
           required
-          className="w-full px-4 py-4 rounded-xl bg-gray-100/60 focus:outline-none focus:bg-white focus:ring-1 focus:ring-primary/30 border border-transparent focus:border-primary/30 text-text transition-all duration-300 shadow-sm focus:shadow-lg"
+          className="w-full px-4 py-4 rounded-xl focus:outline-none focus:bg-white focus:ring-1 focus:ring-primary/30 border border-gray-300 focus:border-primary/30 text-text transition-all duration-300 shadow-sm focus:shadow-lg mt-2"
         />
       </div>
 
-      <div className="relative">
+      <div>
+        <label htmlFor="password" className="block text-sm font-medium text-gray-600">Password</label>
         <input
           type="password"
           value={password}
+          id="password"
           onChange={(e) => setPassword(e.target.value)}
-          placeholder="Password"
           required
-          className="w-full px-4 py-4 rounded-xl bg-gray-100/60 focus:outline-none focus:bg-white focus:ring-1 focus:ring-primary/30 border border-transparent focus:border-primary/30 text-text transition-all duration-300 shadow-sm focus:shadow-lg"
+          className="w-full px-4 py-4 rounded-xl focus:outline-none focus:bg-white focus:ring-1 focus:ring-primary/30 border border-gray-300 focus:border-primary/30 text-text transition-all duration-300 shadow-sm focus:shadow-lg mt-2"
         />
       </div>
 

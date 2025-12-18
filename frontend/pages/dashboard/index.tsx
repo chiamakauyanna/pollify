@@ -43,7 +43,7 @@ export default function AdminDashboard() {
           </div>
 
           <button
-            onClick={() => router.push("/polls/create")}
+            onClick={() => router.push("/dashboard/create")}
             className="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-lg shadow hover:bg-secondary transition"
           >
             <Plus className="w-5 h-5" />
